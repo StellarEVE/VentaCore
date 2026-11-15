@@ -27,3 +27,18 @@ jobs:
 
       - name: Run workspace tests
         run: cargo test --release --workspace
+
+      - name: Package portable ZIP
+        run: |
+          mkdir staging
+          cp target/release/ventacore-app.exe staging/
+          cp target/release/ventacore-cli.exe staging/
+          cp README.md staging/
+          cp LICENSE staging/
+          Compress-Archive -Path staging/* -DestinationPath target/ventacore-windows-x64-portable.zip
+
+      - name: Upload portable ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ventacore-windows-x64-portable
+          path: target/ventacore-windows-x64-portable.zip

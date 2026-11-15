@@ -96,6 +96,10 @@ impl FrameCache {
     pub fn current_bytes(&self) -> usize {
         self.current_bytes
     }
+
+    pub fn capacity_bytes(&self) -> usize {
+        self.capacity_bytes
+    }
 }
 
 /// Dynamic resolution tier manager that adjusts preview resolution to keep playback real-time.

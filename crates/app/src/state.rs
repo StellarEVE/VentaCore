@@ -14,7 +14,7 @@ use ventacore_audio::SongStructure;
 use ventacore_core::command::Command;
 use ventacore_core::history::History;
 use ventacore_core::model::{Asset, AssetId, Item, ItemId, Project};
-use ventacore_core::storage::{save_autosave, save_project_atomic};
+use ventacore_core::storage::{load_project, save_autosave, save_project_atomic};
 use ventacore_core::time::Tick;
 use ventacore_engine::pipeline::{CancellationToken, ConductorUpdate};
 use ventacore_media::cache::MediaCache;
@@ -23,6 +23,8 @@ use ventacore_render::clock::MasterClock;
 use ventacore_render::preview::FrameCache;
 use ventacore_render::render_cache::RenderCache;
 use ventacore_render::types::FitMode;
+
+use crate::widgets::settings_dialog::AppPreferences;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppPage {
@@ -138,6 +140,9 @@ pub struct AppState {
     pub frame_cache: FrameCache,
     pub is_dirty: bool,
     pub last_autosave: Instant,
+    pub recovery_path: Option<PathBuf>,
+    pub preferences: AppPreferences,
+    pub preferences_open: bool,
 }
 
 impl AppState {
@@ -168,7 +173,28 @@ impl AppState {
             frame_cache,
             is_dirty: false,
             last_autosave: Instant::now(),
+            recovery_path: None,
+            preferences: AppPreferences::default(),
+            preferences_open: false,
         }
+    }
+
+    /// Checks if an autosave file exists for crash recovery (Stage 17).
+    pub fn check_autosave_recovery(&mut self, candidate_path: PathBuf) {
+        if candidate_path.exists() {
+            self.recovery_path = Some(candidate_path);
+        }
+    }
+
+    /// Restores the recovered project from autosave.
+    pub fn restore_recovered_autosave(&mut self) -> Result<(), String> {
+        let path = self.recovery_path.take().ok_or("No recovery file found")?;
+        let loaded = load_project(&path).map_err(|e| format!("Recovery error: {e}"))?;
+        self.project = loaded.clone();
+        self.history = History::with_max_depth(loaded, 50);
+        self.is_dirty = true;
+        self.add_toast(ToastLevel::Success, "Recovered session restored successfully from crash.");
+        Ok(())
     }
 
     /// Dispatch a command to history and project (Charter Rule 3).

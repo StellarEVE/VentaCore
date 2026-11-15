@@ -10,6 +10,7 @@ use std::process::ExitCode;
 use ventacore_cli::commands::analyze_song::execute_analyze_song;
 use ventacore_cli::commands::capabilities::execute_capabilities;
 use ventacore_cli::commands::export::execute_export;
+use ventacore_cli::commands::measure_hardware::execute_measure_hardware;
 use ventacore_cli::commands::plan::execute_plan;
 use ventacore_cli::commands::purge_cache::execute_purge_cache;
 use ventacore_cli::commands::run::execute_run;
@@ -123,6 +124,9 @@ enum Commands {
         #[arg(long)]
         path: Option<PathBuf>,
     },
+
+    /// Run the guided hardware proof and performance measurement kit (Stage 19).
+    MeasureHardware,
 }
 
 fn main() -> ExitCode {
@@ -158,6 +162,7 @@ fn main() -> ExitCode {
             preset,
         } => execute_run(song, &footage, output, width, height, seed, preset.as_deref()),
         Commands::PurgeCache { path } => execute_purge_cache(path),
+        Commands::MeasureHardware => execute_measure_hardware().map_err(|e| e.into()),
     };
 
     match result {
