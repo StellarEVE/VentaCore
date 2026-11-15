@@ -61,3 +61,13 @@ VentaCore is organised into eight crates across strictly ordered architectural l
 4. **Codec boundary**: Codecs and FFmpeg exist exclusively within `ventacore-platform`.
 5. **Graphics first, never graphics only**: Every GPU path has a working software fallback.
 6. **Strict downward dependency**: A crate may only depend on crates in lower layers.
+
+---
+
+## Project Documentation
+
+Detailed design documents and development guides are maintained in the [`docs/`](docs/) directory:
+- [Product Plan & AI Build Guide](docs/PLAN.md) — The complete specification, charter rules, open decisions, and stage definitions.
+- [Implementation Roadmap](docs/ROADMAP.md) — Execution plan, instructions for future agents, and stage exit gates.
+- [Development Status](docs/DEVELOPMENT_STATUS.md) — Live snapshot of verified capabilities, test passes, and current checkpoint.
+
