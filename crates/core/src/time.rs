@@ -97,6 +97,16 @@ impl Tick {
         self.0 as f64 / TICKS_PER_SECOND as f64
     }
 
+    #[inline]
+    pub fn saturating_sub(self, rhs: Tick) -> Self {
+        Tick(self.0.saturating_sub(rhs.0))
+    }
+
+    #[inline]
+    pub fn saturating_add(self, rhs: Tick) -> Self {
+        Tick(self.0.saturating_add(rhs.0))
+    }
+
     /// Construct from floating-point seconds (UI input boundary only).
     pub fn from_seconds_f64(secs: f64) -> Self {
         Tick((secs * TICKS_PER_SECOND as f64).round() as i64)

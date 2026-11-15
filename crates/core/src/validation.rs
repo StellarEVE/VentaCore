@@ -59,6 +59,40 @@ pub enum ValidationError {
 
     #[error("Active song {0:?} does not exist in songs pool")]
     UnknownActiveSong(SongId),
+
+    // R1: Roles and dedicated song track validation errors
+    #[error("Song track {track_id:?} has invalid item count: expected {expected}, found {actual}")]
+    SongTrackItemCountMismatch {
+        track_id: TrackId,
+        expected: usize,
+        actual: usize,
+    },
+
+    #[error("Item {item_id:?} on footage track {track_id:?} references song asset {asset_id:?}")]
+    FootageTrackReferencesSongAsset {
+        item_id: ItemId,
+        track_id: TrackId,
+        asset_id: AssetId,
+    },
+
+    #[error("Song item {item_id:?} placed on non-song track {track_id:?}")]
+    SongItemOnNonSongTrack {
+        item_id: ItemId,
+        track_id: TrackId,
+    },
+
+    #[error("Item {item_id:?} ends at {end}, which is past the song duration {song_duration}")]
+    ItemEndsPastSongRange {
+        item_id: ItemId,
+        end: Tick,
+        song_duration: Tick,
+    },
+
+    #[error("Active song asset {0:?} does not exist or is not marked as Song")]
+    InvalidSongAsset(AssetId),
+
+    #[error("Non-positive song range: start {start} >= end {end}")]
+    NonPositiveSongRange { start: Tick, end: Tick },
 }
 
 impl Project {
@@ -145,6 +179,88 @@ impl Project {
         if let Some(song_id) = self.active_song_id {
             if !self.songs.iter().any(|s| s.id == song_id) {
                 return Err(ValidationError::UnknownActiveSong(song_id));
+            }
+        }
+
+        // 6. R1 Invariant: Dedicated Song Slot & Song Track Validation
+        if let Some(song) = &self.song {
+            if song.end <= song.start {
+                return Err(ValidationError::NonPositiveSongRange {
+                    start: song.start,
+                    end: song.end,
+                });
+            }
+            let song_asset = self.find_asset(song.asset_id).ok_or(ValidationError::InvalidSongAsset(song.asset_id))?;
+            if song_asset.role != AssetRole::Song {
+                return Err(ValidationError::InvalidSongAsset(song.asset_id));
+            }
+
+            let song_dur = song.duration();
+
+            // Validate that the Song track holds only the active song as exactly one item
+            for track in &self.tracks {
+                if track.kind == TrackKind::Song {
+                    let track_items = self.track_items(track.id);
+                    if track_items.len() != 1 {
+                        return Err(ValidationError::SongTrackItemCountMismatch {
+                            track_id: track.id,
+                            expected: 1,
+                            actual: track_items.len(),
+                        });
+                    }
+                    let song_item = track_items[0];
+                    if song_item.asset_id != song.asset_id {
+                        return Err(ValidationError::InvalidSongAsset(song_item.asset_id));
+                    }
+                } else {
+                    // Non-song tracks: must never hold song asset or end past song duration
+                    for item in self.track_items(track.id) {
+                        let item_asset = self.find_asset(item.asset_id);
+                        if let Some(a) = item_asset {
+                            if a.role == AssetRole::Song || a.id == song.asset_id {
+                                return Err(ValidationError::FootageTrackReferencesSongAsset {
+                                    item_id: item.id,
+                                    track_id: track.id,
+                                    asset_id: a.id,
+                                });
+                            }
+                        }
+                        if item.timeline_end() > song_dur {
+                            return Err(ValidationError::ItemEndsPastSongRange {
+                                item_id: item.id,
+                                end: item.timeline_end(),
+                                song_duration: song_dur,
+                            });
+                        }
+                    }
+                }
+            }
+        } else {
+            // When no song is active, any Song track must have 0 items
+            for track in &self.tracks {
+                if track.kind == TrackKind::Song {
+                    let track_items = self.track_items(track.id);
+                    if !track_items.is_empty() {
+                        return Err(ValidationError::SongTrackItemCountMismatch {
+                            track_id: track.id,
+                            expected: 0,
+                            actual: track_items.len(),
+                        });
+                    }
+                } else {
+                    // Non-song tracks must never hold song assets
+                    for item in self.track_items(track.id) {
+                        if let Some(a) = self.find_asset(item.asset_id) {
+                            if a.role == AssetRole::Song {
+                                return Err(ValidationError::FootageTrackReferencesSongAsset {
+                                    item_id: item.id,
+                                    track_id: track.id,
+                                    asset_id: a.id,
+                                });
+                            }
+                        }
+                    }
+                }
             }
         }
 

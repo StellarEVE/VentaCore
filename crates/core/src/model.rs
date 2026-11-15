@@ -9,7 +9,7 @@ use crate::time::{Tick, TimeRange};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-pub const CURRENT_SCHEMA_VERSION: u32 = 1;
+pub const CURRENT_SCHEMA_VERSION: u32 = 2;
 
 /// Strongly typed identifiers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -39,11 +39,20 @@ pub struct ProbeData {
     pub audio_sample_rate: u32,
 }
 
+/// The role of an imported asset in the project (Charter Rule / Part 4b).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub enum AssetRole {
+    Song,
+    #[default]
+    Footage,
+}
+
 /// An imported media file reference.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Asset {
     pub id: AssetId,
     pub path_hint: String,
+    pub role: AssetRole,
     pub fingerprint: Option<String>,
     pub probe_data: Option<ProbeData>,
     pub intro_trim: Tick,
@@ -55,9 +64,14 @@ pub struct Asset {
 
 impl Asset {
     pub fn new(id: AssetId, path_hint: String) -> Self {
+        Self::new_with_role(id, path_hint, AssetRole::Footage)
+    }
+
+    pub fn new_with_role(id: AssetId, path_hint: String, role: AssetRole) -> Self {
         Self {
             id,
             path_hint,
+            role,
             fingerprint: None,
             probe_data: None,
             intro_trim: Tick::ZERO,
@@ -67,11 +81,20 @@ impl Asset {
             favourite_moments: Vec::new(),
         }
     }
+
+    pub fn song(id: AssetId, path_hint: String) -> Self {
+        Self::new_with_role(id, path_hint, AssetRole::Song)
+    }
+
+    pub fn footage(id: AssetId, path_hint: String) -> Self {
+        Self::new_with_role(id, path_hint, AssetRole::Footage)
+    }
 }
 
 /// Track kind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TrackKind {
+    Song,
     Video,
     Audio,
 }
@@ -277,6 +300,32 @@ impl Default for GenerationSettings {
     }
 }
 
+/// The dedicated project song slot (one active song per project).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SongSlot {
+    pub asset_id: AssetId,
+    pub start: Tick,
+    pub end: Tick,
+}
+
+impl SongSlot {
+    pub fn new(asset_id: AssetId, start: Tick, end: Tick) -> Self {
+        Self { asset_id, start, end }
+    }
+
+    pub fn duration(&self) -> Tick {
+        self.end.saturating_sub(self.start)
+    }
+}
+
+/// Policy for replacing the active song on a timeline with existing clips.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub enum ReplaceSongPolicy {
+    #[default]
+    KeepPinnedAndTouched,
+    StartOver,
+}
+
 /// Complete VentaCore Project Model.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Project {
@@ -288,6 +337,12 @@ pub struct Project {
     pub markers: Vec<Marker>,
     pub songs: Vec<SongEntry>,
     pub active_song_id: Option<SongId>,
+    /// R1: Dedicated active song slot.
+    pub song: Option<SongSlot>,
+    /// R1: Fixed Song track identifier.
+    pub song_track_id: Option<TrackId>,
+    /// R1: Migration leftovers preserved so no user edits are ever lost.
+    pub migration_leftovers: Vec<Item>,
     pub settings: GenerationSettings,
 }
 
@@ -308,6 +363,9 @@ impl Project {
             markers: Vec::new(),
             songs: Vec::new(),
             active_song_id: None,
+            song: None,
+            song_track_id: None,
+            migration_leftovers: Vec::new(),
             settings: GenerationSettings::default(),
         }
     }
@@ -320,6 +378,23 @@ impl Project {
     /// Helper to find track by ID.
     pub fn find_track(&self, id: TrackId) -> Option<&Track> {
         self.tracks.iter().find(|t| t.id == id)
+    }
+
+    /// Helper to find the fixed Song track.
+    pub fn song_track(&self) -> Option<&Track> {
+        self.song_track_id
+            .and_then(|id| self.find_track(id))
+            .or_else(|| self.tracks.iter().find(|t| t.kind == TrackKind::Song))
+    }
+
+    /// Timeline duration follows the song range if active,
+    /// otherwise defaults to the latest item end on any track.
+    pub fn timeline_duration(&self) -> Tick {
+        if let Some(song) = &self.song {
+            song.duration()
+        } else {
+            self.items.iter().map(|i| i.timeline_end()).max().unwrap_or(Tick::ZERO)
+        }
     }
 
     /// Helper to find item by ID.

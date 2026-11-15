@@ -225,6 +225,7 @@ impl EditPage {
 
     fn render_track_row(&mut self, ui: &mut Ui, track: &Track, state: &mut AppState) {
         let (icon, _label) = match track.kind {
+            TrackKind::Song => ("🎵", "Song"),
             TrackKind::Video => ("📹", "Video"),
             TrackKind::Audio => ("🔊", "Audio"),
         };

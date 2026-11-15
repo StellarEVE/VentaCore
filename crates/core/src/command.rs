@@ -115,6 +115,21 @@ pub enum Command {
     RemoveSong(SongId),
     SetActiveSong(Option<SongId>),
     UpdateSettings(GenerationSettings),
+
+    // R1: Roles, dedicated song slot and footage management commands
+    SetSong {
+        asset_id: AssetId,
+        start: Tick,
+        end: Tick,
+        policy: ReplaceSongPolicy,
+    },
+    ClearSong,
+    SetSongRange {
+        start: Tick,
+        end: Tick,
+    },
+    AddFootage(Asset),
+    RemoveFootage(AssetId),
 }
 
 impl Project {
@@ -383,6 +398,121 @@ impl Project {
             }
             Command::UpdateSettings(settings) => {
                 self.settings = settings.clone();
+            }
+
+            // R1: Roles, dedicated song slot and footage management commands
+            Command::SetSong {
+                asset_id,
+                start,
+                end,
+                policy,
+            } => {
+                let asset = self
+                    .assets
+                    .iter_mut()
+                    .find(|a| a.id == *asset_id)
+                    .ok_or(CommandError::AssetNotFound(*asset_id))?;
+                asset.role = AssetRole::Song;
+
+                // Ensure fixed Song track exists
+                let song_track_id = if let Some(t) = self.song_track() {
+                    t.id
+                } else {
+                    let tid = TrackId(0);
+                    self.tracks.insert(0, Track::new(tid, "Song", TrackKind::Song));
+                    tid
+                };
+                self.song_track_id = Some(song_track_id);
+
+                let song_dur = (*end).saturating_sub(*start);
+
+                // Handle replacement policy for existing items
+                match policy {
+                    ReplaceSongPolicy::StartOver => {
+                        // Clear all non-song items
+                        self.items.retain(|i| i.track_id == song_track_id);
+                    }
+                    ReplaceSongPolicy::KeepPinnedAndTouched => {
+                        // Remove unpinned and untouched items; keep pinned or touched items
+                        let mut leftovers = Vec::new();
+                        self.items.retain(|i| {
+                            if i.track_id == song_track_id {
+                                return true;
+                            }
+                            if i.pinned || i.touched {
+                                if i.timeline_end() > song_dur {
+                                    leftovers.push(i.clone());
+                                    false
+                                } else {
+                                    true
+                                }
+                            } else {
+                                false
+                            }
+                        });
+                        self.migration_leftovers.extend(leftovers);
+                    }
+                }
+
+                // Remove existing song item on Song track
+                self.items.retain(|i| i.track_id != song_track_id);
+
+                // Insert the new single song item on the Song track
+                let next_item_id = ItemId(self.items.iter().map(|i| i.id.0).max().unwrap_or(0) + 1);
+                let song_item = Item::new(
+                    next_item_id,
+                    song_track_id,
+                    *asset_id,
+                    Tick::ZERO,
+                    song_dur,
+                    *start,
+                );
+                self.items.push(song_item);
+                self.song = Some(SongSlot::new(*asset_id, *start, *end));
+            }
+            Command::ClearSong => {
+                let song_track_id = self.song_track().map(|t| t.id);
+                if let Some(stid) = song_track_id {
+                    self.items.retain(|i| i.track_id != stid);
+                }
+                self.song = None;
+            }
+            Command::SetSongRange { start, end } => {
+                if let Some(song) = &mut self.song {
+                    song.start = *start;
+                    song.end = *end;
+                    let song_dur = (*end).saturating_sub(*start);
+                    let song_track_id = self.song_track().map(|t| t.id);
+                    if let Some(stid) = song_track_id {
+                        if let Some(item) = self.items.iter_mut().find(|i| i.track_id == stid) {
+                            item.source_in = *start;
+                            item.timeline_duration = song_dur;
+                        }
+
+                        // Protect against items extending past song duration
+                        let mut leftovers = Vec::new();
+                        self.items.retain(|i| {
+                            if i.track_id == stid {
+                                true
+                            } else if i.timeline_end() > song_dur {
+                                leftovers.push(i.clone());
+                                false
+                            } else {
+                                true
+                            }
+                        });
+                        self.migration_leftovers.extend(leftovers);
+                    }
+                }
+            }
+            Command::AddFootage(asset) => {
+                let mut a = asset.clone();
+                a.role = AssetRole::Footage;
+                self.assets.push(a);
+            }
+            Command::RemoveFootage(asset_id) => {
+                self.assets.retain(|a| a.id != *asset_id);
+                self.items.retain(|i| i.asset_id != *asset_id);
             }
         }
         Ok(())

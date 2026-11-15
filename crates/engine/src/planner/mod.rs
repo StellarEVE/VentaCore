@@ -36,12 +36,17 @@ pub fn plan_montage(
     settings_override: Option<&GenerationSettings>,
     target_track_id: Option<TrackId>,
 ) -> Result<MontagePlan, PlannerError> {
-    // 1. Validate song structure
+    // 1. Validate song structure & range
     if song.beat_ticks.is_empty() {
         return Err(PlannerError::EmptySong);
     }
 
-    let song_duration = *song.beat_ticks.last().unwrap();
+    let song_duration = if let Some(slot) = &project.song {
+        slot.duration()
+    } else {
+        *song.beat_ticks.last().unwrap()
+    };
+
     if song_duration <= Tick::ZERO {
         return Err(PlannerError::EmptySong);
     }
@@ -78,9 +83,12 @@ pub fn plan_montage(
         return Err(PlannerError::TargetTrackNotVideo(track.id));
     }
 
-    // 4. Precompute valid source intervals for all project assets
+    // 4. Precompute valid source intervals for FOOTAGE assets only (song is never a candidate)
     let mut valid_intervals_map: HashMap<AssetId, Vec<ventacore_core::TimeRange>> = HashMap::new();
     for asset in &project.assets {
+        if asset.role != ventacore_core::AssetRole::Footage {
+            continue;
+        }
         let valid = compute_valid_source_intervals(asset, footage_map.get(&asset.id));
         if !valid.is_empty() {
             valid_intervals_map.insert(asset.id, valid);

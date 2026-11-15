@@ -19,9 +19,9 @@ pub use fixtures::generate_click_train;
 pub use history::History;
 pub use logger::append_log_line;
 pub use model::{
-    Asset, AssetId, GenerationSettings, GridMode, Item, ItemId, Marker, MarkerId, PlacementMode,
-    ProbeData, Project, SongEntry, SongId, Track, TrackId, TrackKind, Transition, TransitionKind,
-    CURRENT_SCHEMA_VERSION,
+    Asset, AssetId, AssetRole, GenerationSettings, GridMode, Item, ItemId, Marker, MarkerId, PlacementMode,
+    ProbeData, Project, ReplaceSongPolicy, SongEntry, SongId, SongSlot, Track, TrackId, TrackKind, Transition,
+    TransitionKind, CURRENT_SCHEMA_VERSION,
 };
 pub use storage::{
     load_project, migrate_project, save_autosave, save_project_atomic, StorageError,
