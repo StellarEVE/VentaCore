@@ -25,3 +25,8 @@ ventacore-platform = { path = "crates/platform" }
 ventacore-media = { path = "crates/media" }
 ventacore-render = { path = "crates/render" }
 ventacore-engine = { path = "crates/engine" }
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+proptest = "1.4"
