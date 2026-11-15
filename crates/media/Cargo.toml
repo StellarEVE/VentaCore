@@ -9,3 +9,4 @@ repository.workspace = true
 [dependencies]
 ventacore-core = { workspace = true }
 ventacore-platform = { workspace = true }
+serde = { workspace = true }

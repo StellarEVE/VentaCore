@@ -2,3 +2,7 @@
 //!
 //! Studies footage: content fingerprinting, thumbnails, staged scene analysis,
 //! black range detection, motion estimation, and cache management.
+
+pub mod analysis;
+
+pub use analysis::{AnalysisLevel, FootageAnalysis, MotionPoint};

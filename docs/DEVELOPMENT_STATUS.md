@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-11-15  
 **Current Branch**: `main`  
-**Latest Verified Commit**: `eec147e`  
+**Latest Verified Commit**: (Stage 3 checkpoint)  
 **Repository**: [https://github.com/StellarEVE/VentaCore](https://github.com/StellarEVE/VentaCore)
 
 ---
@@ -12,8 +12,8 @@
 | Check | Result | Details |
 |---|---|---|
 | **Workspace Compilation (Debug)** | **PASS** | All 8 crates compiled with zero warnings/errors. |
-| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed in 43.46s. |
-| **Unit & Integration Tests** | **PASS** | 25 tests passed; 0 failed; 0 ignored. |
+| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed in 2.44s. |
+| **Unit & Integration Tests** | **PASS** | 37 tests passed; 0 failed; 0 ignored. |
 | **Layer Architecture Enforcement** | **PASS** | Strict downward dependency direction and border checks verified. |
 | **Property-Based Invariant Fuzzing** | **PASS** | 100 randomized multi-command test runs verified with `proptest`. |
 | **CI Pipelines Configured** | **PASS** | Linux fast CI (`linux-ci.yml`) and Windows release CI (`windows-release.yml`). |
@@ -47,13 +47,23 @@
 - **Display Peaks & Energy Curves**: Downsampled waveform peaks (50 pts/sec), continuous energy per second, and segmented energy per bar for cut-density scaling.
 - **Pure Manual Correction Functions**: `tap_tempo`, `half_time`, `double_time`, `shift_grid`, `set_downbeat`.
 
+### Stage 3: The Planner
+- **Deterministic Montage Planner**: `plan_montage` in `ventacore-engine::planner` takes project snapshot, song structure, footage analysis, and settings to build a complete cut timeline with ranked alternatives per slot.
+- **Charter Rule 8 Enforcement**: Pinned and touched clips are strictly respected and preserved byte-for-byte; open intervals are automatically computed around them.
+- **Hard Constraint Safety**: Candidate footage windows never cross intro trims, outro trims, exclude ranges, or black ranges.
+- **Beat Grid Alignment & Cut Offset**: Cuts land synchronously on beats, with configurable lead offset (`cut_offset`) to ensure cuts hit right on visual action transients.
+- **Energy Density Cut Scaling**: Bar energy dynamically scales cut intervals—high-energy passages yield rapid cuts (1 beat) while low-energy passages yield longer, steady cuts (4-8 beats).
+- **Candidate Ranking & Selection**: Multi-factor scoring incorporating song-to-footage motion alignment, favourite moments bonus, scene cut snap bonus, and source reuse penalty. Alternatives are ranked in descending score order with guaranteed zero self-inclusion.
+- **Placement Modes**: Supports both `PlacementMode::WindowedWalk` (with `continue_start_points` and spread jump controls) and `PlacementMode::EvenWindows`.
+- **Command Integration**: `apply_plan_to_project` applies cut timelines strictly through atomic, validated Project commands (`RemoveItem` for unpinned items, `InsertItem` for new cuts).
+
 ---
 
 ## Active Milestone & Next Target
 
 - **Current Milestone**: Milestone A: First Cut (CLI)
-- **Current Stage**: **Stage 3: The Planner**
-- **Goal for Stage 3**: Build the deterministic montage planner inside `ventacore-engine` that scores candidate footage windows, respects user pins and trims as hard constraints, adjusts cut density based on bar energy, aligns cuts with scene boundaries and onsets, and emits batches with ranked alternatives.
+- **Current Stage**: **Stage 4: Platform: Video Files and Graphics Hardware**
+- **Goal for Stage 4**: In-process FFmpeg integration behind abstract `Decoder` and `Encoder` traits in `ventacore-platform`, hardware decoding context probing, and capability reporting.
 
 ---
 

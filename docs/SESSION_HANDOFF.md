@@ -49,6 +49,25 @@ This document captures the full context of the development sessions up to **Stag
 - Pure manual correction functions: `tap_tempo`, `half_time`, `double_time`, `shift_grid`, `set_downbeat` (`crates/audio/src/corrections.rs`).
 - Comprehensive integration suite (`crates/audio/tests/song_analysis_tests.rs`).
 
+### Stage 3: The Planner
+- Deterministic montage planner inside `ventacore-engine::planner`:
+  - Inputs: Project snapshot, song structure (`SongStructure`), footage analysis (`FootageAnalysis`), generator settings (`GenerationSettings`), and pinned/touched clips.
+  - Outputs: `MontagePlan` with ordered timeline cut items and ranked alternative candidate clips per slot.
+- Controls implemented:
+  - Clip variance, source reuse penalty, spread, continue start points.
+  - Placement modes: `WindowedWalk` and `EvenWindows`.
+  - Duration limits (`min_clip_duration`, `max_clip_duration`).
+  - Cut offset (landing ahead of beats, e.g. -40ms).
+  - Snap to scene cuts and snap to dark edges.
+  - Energy density scaling (higher bar energy -> shorter cuts).
+  - Seeded repeatability via pure-Rust SplitMix64 PRNG.
+  - Presets (`Balanced`, `FastCuts`, `Cinematic`, `NarrativeWalk`, `MontageShuffle`).
+- Hard constraints strictly enforced:
+  - Pinned and touched clips are preserved byte-for-byte across planning.
+  - Intro/outro trims, exclude ranges, and black ranges are never crossed.
+  - Alternatives ranked without self-inclusion.
+- Integration tests in `crates/engine/tests/planner_tests.rs`.
+
 ### Documentation System (Commit `6503513`)
 - `docs/PLAN.md`: Full product brief, 13 Charter rules, and stages 0-19.
 - `docs/ROADMAP.md`: Operational continuation guide and milestone acceptance criteria.
@@ -57,24 +76,14 @@ This document captures the full context of the development sessions up to **Stag
 ---
 
 ## 3. Current Test & Build Status
-- **Workspace Tests**: `cargo test --workspace` -> **25 tests passed; 0 failed**.
-- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in 43.46s**.
+- **Workspace Tests**: `cargo test --workspace` -> **37 tests passed; 0 failed**.
+- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in 2.44s**.
 
 ---
 
-## 4. Next Task: Stage 3 (The Planner)
-The next task to build is **Stage 3: The Planner** inside `crates/engine`:
-1. Build `ventacore-engine::planner`:
-   - Inputs: Project snapshot, song structure (`SongStructure`), footage analysis (provisional or full), generator settings, seed, and pinned/touched clips.
-   - Outputs: Ordered cut timeline plus ranked alternative candidate clips per slot.
-2. Implement controls:
-   - Clip variance, source reuse penalty, spread, continue start points.
-   - Placement modes: `WindowedWalk` and `EvenWindows`.
-   - Duration limits (min/max clip duration).
-   - Cut offset (landing ahead of beats).
-   - Snap to scene cuts and snap to dark edges.
-   - Energy density scaling (higher bar energy -> shorter cuts).
-   - Seeded repeatability.
-3. Hard constraints:
-   - Pinned and touched clips are never replaced or mutated.
-   - Trims, exclude ranges, and black ranges are never crossed.
+## 4. Next Task: Stage 4 (Platform: Video Files and Graphics Hardware)
+The next task to build is **Stage 4: Platform** inside `crates/platform`:
+1. In-process FFmpeg bindings behind abstract `Decoder` and `Encoder` traits.
+2. Hardware decoding context probing and capability reporting.
+3. Variable frame rate, rotation, and 10-bit source handling.
+4. Windows build environment configuration (`FFMPEG_DLL_PATH`, `FFMPEG_INCLUDE_DIR`, `LIBCLANG_PATH`).

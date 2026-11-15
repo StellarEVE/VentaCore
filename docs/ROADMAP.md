@@ -77,15 +77,15 @@ Before modifying code, read these documents in order:
   - Pure manual correction functions: `tap_tempo`, `half_time`, `double_time`, `shift_grid`, `set_downbeat`.
   - *Exit gate passed*: Click trains at 90, 120, 140 BPM measure within $\pm 1$ BPM; alternating octave ambiguity resolved; manual corrections tested; change points detected in quiet-to-loud signal; 100% deterministic results across runs.
 
-- [ ] **Stage 3: The Planner** (Next up)
-  - Deterministic montage planner inside `ventacore-engine`.
-  - Takes project snapshot, song map, footage analysis (provisional or full), settings, seed, and pinned/touched clips.
-  - Emits timeline plan with ranked alternative candidates per clip.
+- [x] **Stage 3: The Planner** (Completed: Stage 3 checkpoint)
+  - Deterministic montage planner inside `ventacore-engine::planner`.
+  - Takes project snapshot, song structure, footage analysis (provisional or full), settings, seed, and pinned/touched clips.
+  - Emits timeline plan with ranked alternative candidates per slot.
   - Planner controls: clip variance, source reuse penalty, spread, continue start points, placement modes (`WindowedWalk`, `EvenWindows`), duration limits, cut offset, scene snapping, dark edge snapping, energy density scaling, grid modes, presets.
-  - Pinned and touched clips are strictly respected and untouched.
-  - *Exit gate*: Same inputs + seed produce identical clip list; refinement leaves pinned clips byte-for-byte unchanged; no clip crosses trims, exclusions, or black ranges; cuts land on grid with offset; higher energy produces shorter cuts; alternatives ranked without self-inclusion.
+  - Pinned and touched clips are strictly respected and preserved byte-for-byte.
+  - *Exit gate passed*: Same inputs + seed produce identical clip list; refinement leaves pinned clips byte-for-byte unchanged; no clip crosses trims, exclusions, or black ranges; cuts land on grid with offset; higher energy produces shorter cuts; alternatives ranked without self-inclusion.
 
-- [ ] **Stage 4: Platform: Video Files and Graphics Hardware**
+- [ ] **Stage 4: Platform: Video Files and Graphics Hardware** (Next up)
   - In-process FFmpeg integration behind `Decoder` and `Encoder` traits in `ventacore-platform`.
   - Hardware decoding context probing and capability reporting.
   - Variable frame rate, rotation, and 10-bit source handling.

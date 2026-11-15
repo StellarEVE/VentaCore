@@ -778,6 +778,8 @@ dependencies = [
 name = "ventacore-engine"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "thiserror",
  "ventacore-audio",
  "ventacore-core",
  "ventacore-media",
@@ -789,6 +791,7 @@ dependencies = [
 name = "ventacore-media"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "ventacore-core",
  "ventacore-platform",
 ]

@@ -12,3 +12,5 @@ ventacore-audio = { workspace = true }
 ventacore-platform = { workspace = true }
 ventacore-media = { workspace = true }
 ventacore-render = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
