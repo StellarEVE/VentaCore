@@ -8,3 +8,7 @@ repository.workspace = true
 
 [dependencies]
 ventacore-core = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+rustfft = { workspace = true }
+symphonia = { workspace = true }
