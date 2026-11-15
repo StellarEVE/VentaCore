@@ -73,17 +73,30 @@ This document captures the full context of the development sessions up to **Stag
 - `docs/ROADMAP.md`: Operational continuation guide and milestone acceptance criteria.
 - `docs/DEVELOPMENT_STATUS.md`: Live tracking of test results and verified capabilities.
 
+### Stage 4: Platform: Video Files and Graphics Hardware
+- In-process FFmpeg integration behind `VideoDecoder` and `VideoEncoder` traits in `ventacore-platform`.
+- Hardware capability probing with real-frame trial execution (`probe_hardware_capabilities`, `run_decoder_trial`, `run_encoder_trial`).
+- Honest disclosure of active encoder/decoder names (`active_decoder_name`, `active_encoder_name`) conforming to Charter Rules 6 and 11.
+- Pure-Rust software reference implementations (`SyntheticVideoDecoder`, `SyntheticVideoEncoder`) ensuring reliable testing and software fallbacks (Charter Rule 5).
+- Variable Frame Rate (VFR) handling via `VfrTimecodeIndex` with binary search timeline lookup and jitter detection.
+- Container rotation handling (0°, 90°, 180°, 270°) with buffer transposition and pixel rotation.
+- 10-bit and 12-bit source color conversion (`Yuv420p10le` -> `Rgba8`) without clipping or banding.
+- Windows build environment configuration via `PlatformEnvironmentConfig` (`FFMPEG_DLL_PATH`, `FFMPEG_INCLUDE_DIR`, `LIBCLANG_PATH`).
+- Integration tests in `crates/platform/tests/platform_tests.rs`.
+
 ---
 
 ## 3. Current Test & Build Status
-- **Workspace Tests**: `cargo test --workspace` -> **37 tests passed; 0 failed**.
-- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in 2.44s**.
+- **Workspace Tests**: `cargo test --workspace` -> **54 tests passed; 0 failed**.
+- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in 4.85s**.
 
 ---
 
-## 4. Next Task: Stage 4 (Platform: Video Files and Graphics Hardware)
-The next task to build is **Stage 4: Platform** inside `crates/platform`:
-1. In-process FFmpeg bindings behind abstract `Decoder` and `Encoder` traits.
-2. Hardware decoding context probing and capability reporting.
-3. Variable frame rate, rotation, and 10-bit source handling.
-4. Windows build environment configuration (`FFMPEG_DLL_PATH`, `FFMPEG_INCLUDE_DIR`, `LIBCLANG_PATH`).
+## 4. Next Task: Stage 5 (Footage Analysis)
+The next task to build is **Stage 5: Footage Analysis** inside `crates/media`:
+1. Media crate footage analysis pipeline:
+   - Content fingerprinting (file size + start/mid/end hash).
+   - Stage 0: Probe container (duration, resolution, fps, rotation, audio tracks).
+   - Stage 1: Quick pass (thumbnails, coarse scene cuts, rough motion estimate).
+   - Stage 2: Full pass (exact scene boundaries, black range detection, dense motion curve, best moments).
+2. Content-addressed disk cache under fingerprint.

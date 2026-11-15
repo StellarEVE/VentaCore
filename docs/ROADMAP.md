@@ -85,13 +85,15 @@ Before modifying code, read these documents in order:
   - Pinned and touched clips are strictly respected and preserved byte-for-byte.
   - *Exit gate passed*: Same inputs + seed produce identical clip list; refinement leaves pinned clips byte-for-byte unchanged; no clip crosses trims, exclusions, or black ranges; cuts land on grid with offset; higher energy produces shorter cuts; alternatives ranked without self-inclusion.
 
-- [ ] **Stage 4: Platform: Video Files and Graphics Hardware** (Next up)
-  - In-process FFmpeg integration behind `Decoder` and `Encoder` traits in `ventacore-platform`.
-  - Hardware decoding context probing and capability reporting.
-  - Variable frame rate, rotation, and 10-bit source handling.
+- [x] **Stage 4: Platform: Video Files and Graphics Hardware** (Completed: Stage 4 checkpoint)
+  - In-process FFmpeg integration behind `VideoDecoder` and `VideoEncoder` traits in `ventacore-platform`.
+  - Hardware decoding and encoding context probing with real-frame trial execution (Charter Rule 6).
+  - Variable frame rate (VFR) detection and binary search timecode indexing.
+  - Container rotation transforms (0°, 90°, 180°, 270°) and 10-bit source conversion (`Yuv420p10le` -> `Rgba8`).
   - Windows build environment configuration (`FFMPEG_DLL_PATH`, `FFMPEG_INCLUDE_DIR`, `LIBCLANG_PATH`).
+  - *Exit gate passed*: Real frames decoded and encoded; hardware capability report accurately identifies adapters and proven codecs; VFR streams indexed to exact ticks; rotation and 10-bit color verified; software fallbacks proven.
 
-- [ ] **Stage 5: Footage Analysis**
+- [ ] **Stage 5: Footage Analysis** (Next up)
   - Media crate: content fingerprinting (size + start/mid/end hash).
   - Stage 0 (probe container), Stage 1 (quick pass thumbnails/scenes/motion), Stage 2 (full pass exact scenes, black ranges, motion, best moments).
   - Content-addressed disk cache under fingerprint.

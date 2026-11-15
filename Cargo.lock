@@ -800,6 +800,8 @@ dependencies = [
 name = "ventacore-platform"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "thiserror",
  "ventacore-core",
 ]
 
