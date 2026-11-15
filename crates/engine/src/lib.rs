@@ -6,6 +6,7 @@
 pub mod export;
 pub mod import;
 pub mod pipeline;
+pub mod playback;
 pub mod planner;
 
 pub use export::{export_timeline, ExportConfig, ExportError, ExportProgress, ExportSummary};
@@ -17,6 +18,7 @@ pub use pipeline::{
     CancellationToken, ConductorConfig, ConductorHandle, ConductorUpdate, PipelineStage,
     PipelineStatus, ProgressEvent,
 };
+pub use playback::{downscale_rgba, PlaybackEngine, PlayerFrame};
 pub use planner::{
     apply_plan_to_project, compute_open_timeline_intervals, compute_valid_source_intervals,
     get_preset_settings, plan_montage, CandidateClip, DeterministicRng, MontagePlan, PlanSlot,

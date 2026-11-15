@@ -26,7 +26,9 @@ use crate::theme::{
     GOLD_FAVOURITE, SURFACE, TEXT_MUTED, TEXT_PRIMARY, WARNING_AMBER,
 };
 use crate::widgets::file_dialog::{FileDialogHelper, FileDialogResult};
+use crate::widgets::monitor::Monitor;
 use crate::widgets::timecode::format_time_minutes_seconds;
+use ventacore_engine::playback::PlaybackEngine;
 
 pub struct MediaPage {
     first_tap: Option<Instant>,
@@ -37,6 +39,9 @@ pub struct MediaPage {
     pub footage_panel_rect: Option<Rect>,
     pub pending_choice: Option<ImportChoicePrompt>,
     pub not_imported_strip: Vec<(PathBuf, String, bool)>,
+    pub source_player: PlaybackEngine,
+    pub source_monitor: Monitor,
+    pub loaded_asset_id: Option<AssetId>,
 }
 
 impl Default for MediaPage {
@@ -50,6 +55,9 @@ impl Default for MediaPage {
             footage_panel_rect: None,
             pending_choice: None,
             not_imported_strip: Vec::new(),
+            source_player: PlaybackEngine::new(),
+            source_monitor: Monitor::source(),
+            loaded_asset_id: None,
         }
     }
 }
@@ -596,6 +604,22 @@ impl MediaPage {
                     if is_audio {
                         self.render_audio_waveform(ui, &asset, state);
                     } else {
+                        // Source Monitor
+                        let filename = PathBuf::from(&asset.path_hint)
+                            .file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_else(|| "Source Media".into());
+
+                        if self.loaded_asset_id != Some(asset.id) {
+                            self.loaded_asset_id = Some(asset.id);
+                            let _ = self.source_player.open_clip(&asset.path_hint);
+                        }
+
+                        self.source_monitor.show(ui, &mut self.source_player, &filename);
+                        ui.add_space(12.0);
+                        ui.separator();
+                        ui.add_space(8.0);
+
                         self.render_video_trimmers(ui, &asset, state);
                     }
                 });

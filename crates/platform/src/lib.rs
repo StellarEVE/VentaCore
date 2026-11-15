@@ -3,6 +3,7 @@
 //! Sole interface for hardware probing, in-process FFmpeg video and audio
 //! decoding and encoding, and trial capability verification.
 
+pub mod audio_clock;
 pub mod capabilities;
 pub mod classify;
 pub mod config;
@@ -14,6 +15,7 @@ pub mod traits;
 pub mod types;
 pub mod vfr;
 
+pub use audio_clock::{ClockSource, PlatformAudioClock};
 pub use capabilities::{
     probe_hardware_capabilities, run_decoder_trial, run_encoder_trial, CodecSupport,
     GraphicsAdapterInfo, HardwareCapabilityReport, TrialStatus,

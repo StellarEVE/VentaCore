@@ -89,6 +89,14 @@ impl Asset {
     pub fn footage(id: AssetId, path_hint: String) -> Self {
         Self::new_with_role(id, path_hint, AssetRole::Footage)
     }
+
+    pub fn is_footage(&self) -> bool {
+        self.role == AssetRole::Footage
+    }
+
+    pub fn is_song(&self) -> bool {
+        self.role == AssetRole::Song
+    }
 }
 
 /// Track kind.

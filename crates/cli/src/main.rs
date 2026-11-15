@@ -10,6 +10,7 @@ use std::process::ExitCode;
 use ventacore_cli::commands::analyze_song::execute_analyze_song;
 use ventacore_cli::commands::capabilities::execute_capabilities;
 use ventacore_cli::commands::export::execute_export;
+use ventacore_cli::commands::frame::execute_frame;
 use ventacore_cli::commands::measure_hardware::execute_measure_hardware;
 use ventacore_cli::commands::plan::execute_plan;
 use ventacore_cli::commands::purge_cache::execute_purge_cache;
@@ -127,6 +128,20 @@ enum Commands {
 
     /// Run the guided hardware proof and performance measurement kit (Stage 19).
     MeasureHardware,
+
+    /// Extract a single frame from a video file to PNG at a given timestamp in seconds.
+    Frame {
+        /// Path to the video file
+        video: PathBuf,
+
+        /// Timestamp in seconds (e.g. 1.5)
+        #[arg(long)]
+        at: f64,
+
+        /// Output destination path for the PNG frame
+        #[arg(long)]
+        out: PathBuf,
+    },
 }
 
 fn main() -> ExitCode {
@@ -163,6 +178,7 @@ fn main() -> ExitCode {
         } => execute_run(song, &footage, output, width, height, seed, preset.as_deref()),
         Commands::PurgeCache { path } => execute_purge_cache(path),
         Commands::MeasureHardware => execute_measure_hardware().map_err(|e| e.into()),
+        Commands::Frame { video, at, out } => execute_frame(video, at, out),
     };
 
     match result {

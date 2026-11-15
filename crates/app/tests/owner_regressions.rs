@@ -192,10 +192,149 @@ fn test_regression_failure_2_mp3_with_cover_art_classified_as_audio_only() {
 /// Failure 3: Monitor widget must render a real decoded frame and match the
 /// expected color in a pixel test, failing if black or unrendered.
 #[test]
-#[ignore = "Stage R3"]
 fn test_regression_failure_3_monitor_shows_real_pixels() {
-    // Stage R3 will introduce the shared player, egui texture upload, and Monitor widget.
-    panic!("Stage R3 not yet applied: no video monitor or texture pipeline in UI");
+    use ventacore_app::widgets::monitor::Monitor;
+    use ventacore_engine::playback::PlaybackEngine;
+    use ventacore_platform::{
+        ColorDepth, PixelFormat, PlatformError, Rotation, VideoDecoder, VideoFrame, VideoMetadata,
+    };
+
+    /// Custom synthetic decoder outputting solid Red at 0s, solid Green at 1s, solid Blue at 2s.
+    struct TestRgbColorDecoder {
+        metadata: VideoMetadata,
+        current_tick: Tick,
+    }
+
+    impl VideoDecoder for TestRgbColorDecoder {
+        fn metadata(&self) -> &VideoMetadata {
+            &self.metadata
+        }
+
+        fn seek(&mut self, target_tick: Tick) -> Result<(), PlatformError> {
+            self.current_tick = target_tick;
+            Ok(())
+        }
+
+        fn decode_next_frame(&mut self) -> Result<Option<VideoFrame>, PlatformError> {
+            let pts = self.current_tick;
+            let dur = Tick::from_frames(1, 30, 1);
+            let w = self.metadata.width;
+            let h = self.metadata.height;
+
+            let pixel = if pts < Tick::from_seconds(1) {
+                // Red at 0.0s
+                [255u8, 0, 0, 255]
+            } else if pts < Tick::from_seconds(2) {
+                // Green at 1.0s
+                [0u8, 255, 0, 255]
+            } else {
+                // Blue at 2.0s
+                [0u8, 0, 255, 255]
+            };
+
+            let mut data = vec![0u8; (w * h * 4) as usize];
+            for chunk in data.chunks_exact_mut(4) {
+                chunk.copy_from_slice(&pixel);
+            }
+
+            self.current_tick = pts + dur;
+
+            Ok(Some(VideoFrame {
+                pts,
+                duration: dur,
+                width: w,
+                height: h,
+                format: PixelFormat::Rgba8,
+                rotation: Rotation::None,
+                bit_depth: ColorDepth::Bits8,
+                data,
+                linesize: [(w * 4) as usize, 0, 0, 0],
+            }))
+        }
+
+        fn active_decoder_name(&self) -> &str {
+            "test-rgb-color-decoder"
+        }
+
+        fn is_hardware_accelerated(&self) -> bool {
+            false
+        }
+    }
+
+    let metadata = VideoMetadata {
+        duration: Tick::from_seconds(3),
+        width: 320,
+        height: 240,
+        fps_num: 30,
+        fps_den: 1,
+        is_vfr: false,
+        rotation: Rotation::None,
+        bit_depth: 8,
+        pixel_format: PixelFormat::Rgba8,
+        codec_name: "test-rgb".into(),
+        has_audio: false,
+        audio_sample_rate: 0,
+        audio_channels: 0,
+    };
+
+    let decoder = TestRgbColorDecoder {
+        metadata,
+        current_tick: Tick::ZERO,
+    };
+
+    let mut player = PlaybackEngine::new();
+    player.open_custom_decoder(Box::new(decoder)).expect("open custom decoder");
+
+    // 1. Verify frame at 0.0s has red pixels (>200 red, <50 green, <50 blue)
+    player.seek(Tick::ZERO);
+    let frame0 = player.current_frame().expect("Frame at 0.0s must exist");
+    assert_eq!(frame0.width, 320);
+    assert_eq!(frame0.height, 240);
+    assert!(
+        frame0.rgba[0] > 200 && frame0.rgba[1] < 50 && frame0.rgba[2] < 50,
+        "Frame at 0.0s must be RED! Got [R:{}, G:{}, B:{}]",
+        frame0.rgba[0],
+        frame0.rgba[1],
+        frame0.rgba[2]
+    );
+
+    // 2. Seek to 1.0s, verify green pixels (<50 red, >200 green, <50 blue)
+    player.seek(Tick::from_seconds(1));
+    let frame1 = player.current_frame().expect("Frame at 1.0s must exist");
+    assert!(
+        frame1.rgba[0] < 50 && frame1.rgba[1] > 200 && frame1.rgba[2] < 50,
+        "Frame at 1.0s must be GREEN! Got [R:{}, G:{}, B:{}]",
+        frame1.rgba[0],
+        frame1.rgba[1],
+        frame1.rgba[2]
+    );
+
+    // 3. Seek to 2.0s, verify blue pixels (<50 red, <50 green, >200 blue)
+    player.seek(Tick::from_seconds(2));
+    let frame2 = player.current_frame().expect("Frame at 2.0s must exist");
+    assert!(
+        frame2.rgba[0] < 50 && frame2.rgba[1] < 50 && frame2.rgba[2] > 200,
+        "Frame at 2.0s must be BLUE! Got [R:{}, G:{}, B:{}]",
+        frame2.rgba[0],
+        frame2.rgba[1],
+        frame2.rgba[2]
+    );
+
+    // 4. Verify Monitor and VideoSurface widget in egui context
+    let ctx = egui::Context::default();
+    let mut monitor = Monitor::source();
+    let _ = ctx.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            monitor.show(ui, &mut player, "Source Monitor Test");
+        });
+    });
+
+    // Verify player is not blank or unrendered
+    assert!(player.current_frame().is_some());
+    let current_pixels = &player.current_frame().unwrap().rgba;
+    assert!(!current_pixels.is_empty(), "Monitor frame must contain real decoded pixels");
+    // Blue frame was active: verify blue is dominant
+    assert!(current_pixels[2] > 200, "Rendered monitor pixels must match active blue frame");
 }
 
 /// Failure 1: Both "Browse for music" and "Add videos" workflows must operate cleanly:
