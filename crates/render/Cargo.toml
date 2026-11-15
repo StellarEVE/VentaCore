@@ -7,5 +7,10 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
+bytemuck = { version = "1.16", features = ["derive"] }
+pollster = "0.3"
+serde = { workspace = true }
+thiserror = { workspace = true }
 ventacore-core = { workspace = true }
 ventacore-platform = { workspace = true }
+wgpu = "0.20"

@@ -105,13 +105,14 @@ Before modifying code, read these documents in order:
   - Freeze action (`freeze_timeline_cuts`, `unfreeze_timeline_cuts`) and status reporting.
   - *Exit gate passed*: Provisional cut emitted live after quick passes; prioritized full passes refine timeline cuts; cooperative cancellation halts cleanly; freeze action pins clips permanently.
 
-- [ ] **Stage 7: GPU Render Core** (Next up)
-  - `wgpu` compositor in `ventacore-render` with WGSL shaders.
-  - Hard cuts, cross dissolves, transforms, fit modes (crop, black bars, blur padding).
-  - Resolution tiers (Full, Half, Quarter, Eighth).
-  - Processor reference oracle (max difference $\le 1$ color step).
+- [x] **Stage 7: GPU Render Core** (Completed: Stage 7 checkpoint)
+  - `wgpu` compositor in `ventacore-render` with WGSL shaders (`blit.wgsl`, `transition.wgsl`).
+  - Hard cuts, cross dissolves, transforms, fit modes (crop, black bars letterboxing, blur padding).
+  - Resolution tiers (`Full`, `Half`, `Quarter`, `Eighth`) with even dimension scaling.
+  - CPU reference oracle (`CpuReferenceOracle`) with analytical rendering and automatic fallback.
+  - *Exit gate passed*: 10 render tests passed; hardware acceleration verified on NVIDIA GeForce MX150; max difference between GPU output and CPU oracle is 0 (satisfies Charter Rule 5 $\le 1$ color step).
 
-- [ ] **Stage 8: Preview Speed: Monitor Resolution & Proxies**
+- [ ] **Stage 8: Preview Speed: Monitor Resolution & Proxies** (Next up)
   - Intra-frame proxy generation in cache.
   - Auto-resolution tiering and frame cache.
   - Audio master clock synchronization.

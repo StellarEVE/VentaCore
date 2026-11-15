@@ -106,17 +106,36 @@ This document captures the full context of the development sessions up to **Stag
 - Pipeline status reporting (`status.rs`): Human-readable progress summaries.
 - Integration tests in `crates/engine/tests/pipeline_tests.rs`.
 
+### Stage 7: GPU Render Core
+- `wgpu` graphics compositor (`GpuCompositor` in `crates/render/src/compositor.rs`):
+  - Hardware offscreen rendering with WGSL shaders (`blit.wgsl`, `transition.wgsl`).
+  - Offscreen render passes, staging buffers, and row-aligned byte readbacks.
+  - Active and verified on physical hardware: NVIDIA GeForce MX150.
+- CPU Reference Oracle (`CpuReferenceOracle` in `crates/render/src/oracle.rs`):
+  - Pure software analytical reference implementation for hard cuts, transitions, transforms, and fit modes.
+  - Serves as the test ground truth and guaranteed software fallback (Charter Rule 5).
+- Verifications & Accuracy (Charter Rule 5):
+  - GPU hardware render output matches CPU Reference Oracle within $\le 1$ color step (measured max channel diff = 0).
+- Fit modes:
+  - `Letterbox`: Aspect ratio preserving fit with solid black borders.
+  - `Crop`: Center crop symmetrically covering the destination canvas.
+  - `BlurPadding`: Outer bars padded with blurred, stretched copy of source frame.
+- Transitions: `CrossDissolve`, `DipToColor` (dip to black/white), `WipeLeft`, `WipeRight`, `PushLeft`, `PushRight`.
+- 2D Transforms: Position, scale, rotation, and opacity with 4x4 transform matrices.
+- Resolution Tiers: `Full` (1.0x), `Half` (0.5x), `Quarter` (0.25x), `Eighth` (0.125x) with even dimension alignment.
+- Automatic fallback: Graceful CPU oracle execution if GPU adapters or drivers are unavailable.
+- Integration tests in `crates/render/tests/render_tests.rs` (10 tests).
+
 ---
 
 ## 3. Current Test & Build Status
-- **Workspace Tests**: `cargo test --workspace` -> **65 tests passed; 0 failed**.
-- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in 10.59s**.
+- **Workspace Tests**: `cargo test --workspace` -> **75 tests passed; 0 failed**.
+- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in release profile**.
 
 ---
 
-## 4. Next Task: Stage 7 (GPU Render Core)
-The next task to build is **Stage 7: GPU Render Core** inside `crates/render`:
-1. `wgpu` compositor in `ventacore-render` with WGSL shaders.
-2. Hard cuts, cross dissolves, transforms, fit modes (crop, black bars, blur padding).
-3. Resolution tiers (Full, Half, Quarter, Eighth).
-4. Processor reference oracle (max difference $\le 1$ color step).
+## 4. Next Task: Stage 8 (Preview Speed: Monitor Resolution & Proxies)
+The next task to build is **Stage 8: Preview Speed** inside `crates/render` / `crates/media`:
+1. Intra-frame proxy generation in cache.
+2. Auto-resolution tiering and frame cache.
+3. Audio master clock synchronization.

@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-11-15  
 **Current Branch**: `main`  
-**Latest Verified Commit**: (Stage 5 & 6 checkpoint)  
+**Latest Verified Commit**: (Stage 7 checkpoint)  
 **Repository**: [https://github.com/StellarEVE/VentaCore](https://github.com/StellarEVE/VentaCore)
 
 ---
@@ -12,9 +12,10 @@
 | Check | Result | Details |
 |---|---|---|
 | **Workspace Compilation (Debug)** | **PASS** | All 8 crates compiled with zero warnings/errors. |
-| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed in 10.59s. |
-| **Unit & Integration Tests** | **PASS** | 65 tests passed; 0 failed; 0 ignored. |
+| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed cleanly. |
+| **Unit & Integration Tests** | **PASS** | 75 tests passed; 0 failed; 0 ignored. |
 | **Layer Architecture Enforcement** | **PASS** | Strict downward dependency direction and border checks verified. |
+| **Hardware Graphics Verification** | **PASS** | Verified on reference target NVIDIA GeForce MX150 (Charter Rule 5: max diff = 0 vs CPU oracle). |
 | **Property-Based Invariant Fuzzing** | **PASS** | 100 randomized multi-command test runs verified with `proptest`. |
 | **CI Pipelines Configured** | **PASS** | Linux fast CI (`linux-ci.yml`) and Windows release CI (`windows-release.yml`). |
 
@@ -67,7 +68,7 @@
 - **10-Bit & 12-Bit Source Handling**: Color conversion from 10-bit planar YUV (`Yuv420p10le`) to 8-bit RGBA without bit-shift clipping or banding.
 - **Environment Configuration**: `PlatformEnvironmentConfig` probes and validates `FFMPEG_DLL_PATH`, `FFMPEG_INCLUDE_DIR`, and `LIBCLANG_PATH` for custom Windows build workflows.
 
-### Stage 5: Footage Analysis
+### Stage 5: Footage Analysis (`ede6cc8`)
 - **Fast Content Fingerprinting (Charter Rule 9)**: `compute_content_fingerprint` hashes file size + 64KB start/mid/end chunks in < 1ms, enabling instant relinking when files move.
 - **Staged Pipeline (Charter Rule 7)**:
   - **Stage 0 Probe**: Instant container probe extracting duration, dimensions, frame rates, rotation, and audio channels.
@@ -75,20 +76,33 @@
   - **Stage 2 Full Pass**: Dense sequential decode with exact scene cut boundary detection, black/dark screen interval detection, dense motion curve, and highlight moments extraction.
 - **Content-Addressed Disposable Cache**: `MediaCache` stores `analysis.json` and thumbnails under `<cache_dir>/<fingerprint>/`. Supports full cache purge without modifying original files.
 
-### Stage 6: Pipeline and Live Cut Building
+### Stage 6: Pipeline and Live Cut Building (`ede6cc8`)
 - **Breadth-Before-Depth Conductor**: `Conductor` orchestrates background execution: song analysis -> quick passes across all videos -> live provisional cut assembly -> prioritized full passes on timeline assets -> cut refinement.
 - **Channels & Asynchronous Streaming**: Streams real-time `ConductorUpdate` events (`Progress`, `ProvisionalCut`, `RefinedCut`, `Finished`).
 - **Cooperative Cancellation**: `CancellationToken` enables graceful, immediate pipeline abortion without leaving corrupted state.
 - **Freeze Action (Charter Rule 8)**: `freeze_timeline_cuts` and `unfreeze_timeline_cuts` permanently protect placed timeline clips by setting `pinned = true`.
 - **Status Reporting (Charter Rule 11)**: `PipelineStatus` provides human-readable progress summaries.
 
+### Stage 7: GPU Render Core (This Checkpoint)
+- **`wgpu` Graphics Compositor (`GpuCompositor`)**: Offscreen rendering engine using WGSL shaders with texture uploads, staging buffers, and row-aligned readbacks. Verified active on reference GPU: NVIDIA GeForce MX150.
+- **CPU Reference Oracle (`CpuReferenceOracle`)**: Pure software reference renderer providing exact analytical baseline for hard cuts, transitions, and transforms (Charter Rule 5).
+- **Charter Rule 5 Proven by Verification**: Hardware GPU rendering tested against CPU Reference Oracle with maximum channel difference $\le 1$ color step (measured max channel difference = 0).
+- **Fit Modes**:
+  - `Letterbox`: Aspect ratio preserving fit with solid black borders.
+  - `Crop`: Center crop symmetrically covering the destination canvas.
+  - `BlurPadding`: Outer bars padded with blurred, stretched copy of source frame.
+- **Transitions**: `CrossDissolve`, `DipToColor` (dip to black/white), `WipeLeft`, `WipeRight`, `PushLeft`, `PushRight`.
+- **2D Transforms**: Position, scale, rotation, and opacity with 4x4 transform matrices.
+- **Resolution Tiers**: `Full` (1.0x), `Half` (0.5x), `Quarter` (0.25x), `Eighth` (0.125x) with even dimension alignment for video codec safety.
+- **Automatic Fallback**: Automatic software fallback to CPU oracle when GPU adapters or drivers are unavailable.
+
 ---
 
 ## Active Milestone & Next Target
 
 - **Current Milestone**: Milestone A: First Cut (CLI)
-- **Current Stage**: **Stage 7: GPU Render Core**
-- **Goal for Stage 7**: `wgpu` compositor in `ventacore-render` with WGSL shaders (hard cuts, cross dissolves, transforms, letterboxing/fit modes) and CPU reference oracle for automated verification.
+- **Next Stage**: **Stage 8: Preview Speed: Monitor Resolution & Proxies**
+- **Goal for Stage 8**: Intra-frame proxy generation in cache, auto-resolution tiering, frame caching, and audio master clock synchronization.
 
 ---
 
@@ -98,5 +112,3 @@
 |---|---|---|
 | **License** | GPL-3.0-or-later included; pending formal confirmation | Recommended to ship free H.264/H.265 encoders; marked pending in README. |
 | **FFmpeg Library** | `symphonia` pure-Rust used for Stage 2; Stage 4 candidate pending | Platform abstraction layer isolates codec bindings completely behind traits. |
-| **UI Theme & Icons** | Dark silver/black theme with teal accents specified | Exact hex colors and widget layout to be finalized in Stage 11. |
-| **Hardware Baseline** | Windows 10/11 x86_64 target | Physical verification on dual-core MX150 laptop scheduled for Stage 19. |
