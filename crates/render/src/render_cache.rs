@@ -24,6 +24,11 @@ impl RenderCache {
         Ok(Self { root_dir })
     }
 
+    /// Path to the root cache directory.
+    pub fn root_dir(&self) -> &Path {
+        &self.root_dir
+    }
+
     /// Default system cache directory for VentaCore render cache.
     pub fn default_dir() -> PathBuf {
         let base = std::env::var("LOCALAPPDATA")

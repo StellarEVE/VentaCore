@@ -35,6 +35,11 @@ impl MediaCache {
         base.join("VentaCore").join("cache").join("footage")
     }
 
+    /// Path to the root cache directory.
+    pub fn root_dir(&self) -> &Path {
+        &self.root_dir
+    }
+
     /// Path to the directory reserved for a specific content fingerprint.
     pub fn fingerprint_dir(&self, fingerprint: &str) -> PathBuf {
         self.root_dir.join(fingerprint)

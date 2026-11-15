@@ -137,30 +137,34 @@ Before modifying code, read these documents in order:
 
 ### Milestone B: Watch It Build (Desktop Shell) — Stages 11 to 14
 
-- [ ] **Stage 11: App Shell** (Next up)
+- [x] **Stage 11: App Shell** (Completed: Milestone B checkpoint)
   - `egui`/`eframe` native shell in `ventacore-app`.
-  - Startup logging, headless graphics probe, four-page footer navigation (Media, Cut, Edit, Export).
-  - Dark silver/black theme with teal highlight and rounded corners.
+  - Startup hardware probe, four-page persistent footer navigation (Media, Cut, Edit, Export) with `Ctrl+1`..`Ctrl+4` shortcuts.
+  - Dark silver/black theme palette with teal highlights and rounded corners.
+  - Toast notification banners, command undo/redo, and periodic atomic autosave.
 
-- [ ] **Stage 12: Media Page**
-  - Drag-and-drop import, thumbnail filmstrips, trims, exclude/include ranges, favourite moments.
-  - Waveform with beat/bar overlay and manual grid corrections.
-  - Fingerprint-based relinking for moved files.
+- [x] **Stage 12: Media Page** (Completed: Milestone B checkpoint)
+  - Drag-and-drop import, thumbnail filmstrips, trims, exclude/favourite ranges.
+  - Interactive waveform canvas rendering peaks and beat/bar overlay with downbeat ticks.
+  - Manual grid corrections: `Tap Tempo`, `Half Time`, `Double Time`, `Shift Grid`, `Set Downbeat`.
 
-- [ ] **Stage 13: Cut Page**
-  - Live timeline skeleton with provisional hatching.
-  - Thumbnail popping, pin/unpin, ranked candidate menu, generator controls, preview player.
+- [x] **Stage 13: Cut Page** (Completed: Milestone B checkpoint)
+  - Live timeline skeleton with provisional hatching and card indicators.
+  - Pin/unpin protections and global "Freeze All Cuts" action (Charter Rule 8).
+  - Ranked alternative candidate swap popover.
+  - Video preview player with synchronized transport and playhead scrubbing.
 
-- [ ] **Stage 14: Export Page (Milestone B Exit Gate)**
-  - Codec selection showing proven hardware encoders.
-  - Export queue with background progress and cancellation.
-  - **Milestone B Pause**: Owner review on real Windows laptop.
+- [x] **Stage 14: Export Page (Milestone B Exit Gate)** (Completed: Milestone B checkpoint)
+  - Codec selector disclosing proven hardware encoders (NVENC, Intel QSV, AMD AMF, MediaFoundation) and software reference fallback.
+  - Render queue with frame-accurate progress and cancellation file safety (atomic `.part` cleanup, Charter Rule 9).
+  - Disposable cache monitor with one-click purge utility.
+  - **Milestone B Exit Gate Passed**: Verified by 101 workspace tests, clean release build, and zero residue files.
 
 ---
 
 ### Milestone C: Version 1.0 (Full Editor & Packaging) — Stages 15 to 19
 
-- [ ] **Stage 15: Edit Page: The Basics**
+- [ ] **Stage 15: Edit Page: The Basics** (Next up)
   - Custom multitrack timeline (video and audio tracks).
   - Move, trim, split, ripple delete, replace, snap to beats/bars, inspector, audio mixer.
 

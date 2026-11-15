@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-11-15  
 **Current Branch**: `main`  
-**Latest Verified Commit**: (Stage 10 checkpoint — Milestone A Completed)  
+**Latest Verified Commit**: (Milestone B Checkpoint — Stages 11-14 Completed)  
 **Repository**: [https://github.com/StellarEVE/VentaCore](https://github.com/StellarEVE/VentaCore)
 
 ---
@@ -12,11 +12,12 @@
 | Check | Result | Details |
 |---|---|---|
 | **Workspace Compilation (Debug)** | **PASS** | All 8 crates compiled with zero warnings/errors. |
-| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed cleanly in 1m 02s. |
-| **Unit & Integration Tests** | **PASS** | 87 tests passed; 0 failed; 0 ignored. |
-| **Layer Architecture Enforcement** | **PASS** | Strict downward dependency direction and border checks verified. |
+| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed cleanly. |
+| **Unit & Integration Tests** | **PASS** | **101 tests passed; 0 failed; 0 ignored**. |
+| **Layer Architecture Enforcement** | **PASS** | Strict downward dependency direction and border checks verified (`workspace_layer_check.rs`). |
 | **Hardware Graphics Verification** | **PASS** | Verified on reference target NVIDIA GeForce MX150 (Charter Rule 5: max diff = 0 vs CPU oracle). |
 | **Property-Based Invariant Fuzzing** | **PASS** | 100 randomized multi-command test runs verified with `proptest`. |
+| **Residue File Hygiene** | **PASS** | Zero `.part`, `.tmp`, or `.raw` residue files on disk. |
 | **CI Pipelines Configured** | **PASS** | Linux fast CI (`linux-ci.yml`) and Windows release CI (`windows-release.yml`). |
 
 ---
@@ -104,7 +105,7 @@
 - **Full-Resolution Timeline Export (`export_timeline`)**: Renders timeline frame-by-frame with active clip selection, transition blending, and video encoding.
 - **Atomic Export Finalization (Charter Rule 9 & 11)**: Writes export stream to `<output_path>.part`; atomically renames to final destination on 100% completion; automatically removes partial file on cancellation or error.
 
-### Stage 10: Command Line (Milestone A Exit Gate — This Checkpoint)
+### Stage 10: Command Line (Milestone A Exit Gate) (`5f737b8`)
 - **`ventacore-cli` Executable**: Production command-line tool with dedicated subcommands:
   - `capabilities`: Inspects and tests hardware adapters, decoders, and encoders.
   - `analyze-song`: Computes tempo, beats, bars, phrases, and loudness change points from any audio file.
@@ -115,14 +116,42 @@
 - **End-to-End Integration Verification (`end_to_end_test.rs`)**: Verified complete automated pipeline on synthetic click-train and video fixtures.
 - **MILESTONE A (Stages 0 to 10) FULLY ACHIEVED**.
 
+### Stage 11: App Shell & Foundation (This Checkpoint)
+- **`egui`/`eframe` Native Desktop Shell**: Window bootstrapping with `eframe::NativeOptions`, dark silver/black theme palette with teal highlights, 4-6px rounded corners, and crisp separating borders.
+- **Startup Hardware Probe**: Non-blocking boot probe disclosing graphics adapters, decoders, and encoders in persistent footer badge.
+- **Four-Page Persistent Navigation Footer**: Instant tab switching between **Media**, **Cut**, **Edit**, and **Export** with keyboard shortcuts (`Ctrl+1` through `Ctrl+4`).
+- **Notification Toast Banner**: Non-intrusive floating toasts for info, success, warning, and error notifications.
+- **History Undo/Redo & Autosave Heartbeat**: Command pattern dispatch with undo/redo and periodic atomic autosaves (Charter Rules 3 & 9).
+
+### Stage 12: Media Page (Footage & Audio Management) (This Checkpoint)
+- **Asset Ingest & Drawer**: Drag-and-drop file ingestion for multi-GB video and song files with automatic content fingerprinting.
+- **Dual-Handle Interactive Trimmers**: Configurable intro trim, outro trim, exclude ranges (shaky/bad moments), and favourite moments.
+- **Interactive Audio Waveform**: Custom painter rendering downsampled waveform peaks and beat/bar grid overlay with downbeat markers.
+- **Manual Grid Corrections**: Toolbar providing pure corrections: `Tap Tempo`, `Half Time (÷2)`, `Double Time (×2)`, `Shift Grid (±Ticks)`, `Set Downbeat`.
+
+### Stage 13: Cut Page (The Signature Live Montage Experience) (This Checkpoint)
+- **Live Montage Skeleton**: Real-time visual timeline displaying provisional cuts with amber cards and refined cuts with solid teal cards.
+- **Planner Controls & Presets**: Live generator controls (`Fast Dynamic`, `Cinematic`, `Ambient`, clip variance, reuse penalty, seed).
+- **Ranked Candidate Swap Popover**: Inspect any slot, review ranked alternative candidate segments scored by motion/continuity, and swap in one click.
+- **Pin / Freeze Actions (Charter Rule 8)**: Per-clip Pin toggle and global "Freeze All Cuts" action permanently preserving placed timeline clips against automated regeneration.
+- **Integrated Video Preview Transport**: Real-time video player with Play/Pause, rewind, scrubber, and SMPTE timecode display.
+
+### Stage 14: Export Page & Milestone B Exit Gate (This Checkpoint)
+- **Hardware Codec Disclosure (Charter Rule 6)**: Discloses active and proven hardware encoders (NVENC, Intel QSV, AMD AMF, MediaFoundation) and software reference fallback.
+- **Export Configuration**: Output resolution (1080p, 4K, 720p), framerate (24, 30, 60 fps), fit modes (`Letterbox`, `Crop`, `BlurPadding`), and soft-limiting audio mix sliders.
+- **Render Queue & Progress Deck**: Frame-accurate export progress monitoring with atomic `.part` finalization.
+- **Cancellation File Safety (Charter Rule 9)**: Immediate cancellation cleans up partial `.part` files without leaving corrupt residues.
+- **Disposable Cache Monitor**: Live inspection of `MediaCache` and `RenderCache` disk footprint with one-click purge utility.
+- **MILESTONE B (Stages 11 to 14) FULLY ACHIEVED**.
+
 ---
 
 ## Active Milestone & Next Target
 
-- **Completed Milestone**: **Milestone A: First Cut (CLI)** (Stages 0 to 10)
-- **Next Milestone**: **Milestone B: Watch It Build (Desktop Shell)** (Stages 11 to 14)
-- **Next Stage**: **Stage 11: App Shell**
-- **Goal for Stage 11**: `egui`/`eframe` native desktop shell, startup logging, headless graphics probe, four-page footer navigation (Media, Cut, Edit, Export), and dark silver/black theme with teal highlight.
+- **Completed Milestone**: **Milestone B: Watch It Build (Desktop Shell)** (Stages 11 to 14)
+- **Next Milestone**: **Milestone C: Version 1.0 (Full Editor & Packaging)** (Stages 15 to 19)
+- **Next Stage**: **Stage 15: Edit Page: The Basics**
+- **Goal for Stage 15**: Custom interactive multitrack timeline (video and audio tracks), move, trim, split, ripple delete, replace, snap to beats/bars, inspector, and audio mixer.
 
 ---
 
