@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-11-15  
 **Current Branch**: `main`  
-**Latest Verified Commit**: (Stage 4 checkpoint)  
+**Latest Verified Commit**: (Stage 5 & 6 checkpoint)  
 **Repository**: [https://github.com/StellarEVE/VentaCore](https://github.com/StellarEVE/VentaCore)
 
 ---
@@ -12,8 +12,8 @@
 | Check | Result | Details |
 |---|---|---|
 | **Workspace Compilation (Debug)** | **PASS** | All 8 crates compiled with zero warnings/errors. |
-| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed in 4.85s. |
-| **Unit & Integration Tests** | **PASS** | 54 tests passed; 0 failed; 0 ignored. |
+| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed in 10.59s. |
+| **Unit & Integration Tests** | **PASS** | 65 tests passed; 0 failed; 0 ignored. |
 | **Layer Architecture Enforcement** | **PASS** | Strict downward dependency direction and border checks verified. |
 | **Property-Based Invariant Fuzzing** | **PASS** | 100 randomized multi-command test runs verified with `proptest`. |
 | **CI Pipelines Configured** | **PASS** | Linux fast CI (`linux-ci.yml`) and Windows release CI (`windows-release.yml`). |
@@ -57,9 +57,9 @@
 - **Placement Modes**: Supports both `PlacementMode::WindowedWalk` (with `continue_start_points` and spread jump controls) and `PlacementMode::EvenWindows`.
 - **Command Integration**: `apply_plan_to_project` applies cut timelines strictly through atomic, validated Project commands (`RemoveItem` for unpinned items, `InsertItem` for new cuts).
 
-### Stage 4: Platform: Video Files and Graphics Hardware
+### Stage 4: Platform: Video Files and Graphics Hardware (`0ad1b08`)
 - **Hardware Probing & Trial Execution (Charter Rule 6)**: `probe_hardware_capabilities()` discovers graphics adapters, probes candidate hardware decoders and encoders (NVDEC/NVENC, D3D11VA, MediaFoundation), and executes trial runs (`run_decoder_trial`, `run_encoder_trial`). Codecs count as available only after a real frame is decoded or encoded.
-- **Active Codec Disclosure (Charter Rules 6 & 11)**: `active_decoder_name()` and `active_encoder_name()` always reveal the exact encoder/decoder used (e.g. `h264_nvenc (Hardware)` or `h264 (pure software fallback)`).
+- **Active Codec Disclosure (Charter Rules 6 & 11)**: `active_decoder_name()` and `active_encoder_name()` always reveal the exact encoder/decoder used.
 - **Universal Software Fallback (Charter Rule 5)**: High-performance pure-Rust reference video decoders and encoders guarantee that headless CI, sandboxes, and machines without dedicated GPUs work reliably.
 - **Abstract Codec Traits**: `VideoDecoder` (metadata inspection, seek, sequential decode, EOF) and `VideoEncoder` (encode_frame, stream finalization) behind unified traits.
 - **Variable Frame Rate (VFR) Handling**: `VfrTimecodeIndex` normalizes fluctuating presentation timestamps to whole-number `Tick`, provides $O(\log N)$ binary search frame lookups, and detects VFR jitter > 5%.
@@ -67,13 +67,28 @@
 - **10-Bit & 12-Bit Source Handling**: Color conversion from 10-bit planar YUV (`Yuv420p10le`) to 8-bit RGBA without bit-shift clipping or banding.
 - **Environment Configuration**: `PlatformEnvironmentConfig` probes and validates `FFMPEG_DLL_PATH`, `FFMPEG_INCLUDE_DIR`, and `LIBCLANG_PATH` for custom Windows build workflows.
 
+### Stage 5: Footage Analysis
+- **Fast Content Fingerprinting (Charter Rule 9)**: `compute_content_fingerprint` hashes file size + 64KB start/mid/end chunks in < 1ms, enabling instant relinking when files move.
+- **Staged Pipeline (Charter Rule 7)**:
+  - **Stage 0 Probe**: Instant container probe extracting duration, dimensions, frame rates, rotation, and audio channels.
+  - **Stage 1 Quick Pass**: Sparse sampling (1 fps), filmstrip thumbnail generation (160x90), and provisional scene cut and motion estimation.
+  - **Stage 2 Full Pass**: Dense sequential decode with exact scene cut boundary detection, black/dark screen interval detection, dense motion curve, and highlight moments extraction.
+- **Content-Addressed Disposable Cache**: `MediaCache` stores `analysis.json` and thumbnails under `<cache_dir>/<fingerprint>/`. Supports full cache purge without modifying original files.
+
+### Stage 6: Pipeline and Live Cut Building
+- **Breadth-Before-Depth Conductor**: `Conductor` orchestrates background execution: song analysis -> quick passes across all videos -> live provisional cut assembly -> prioritized full passes on timeline assets -> cut refinement.
+- **Channels & Asynchronous Streaming**: Streams real-time `ConductorUpdate` events (`Progress`, `ProvisionalCut`, `RefinedCut`, `Finished`).
+- **Cooperative Cancellation**: `CancellationToken` enables graceful, immediate pipeline abortion without leaving corrupted state.
+- **Freeze Action (Charter Rule 8)**: `freeze_timeline_cuts` and `unfreeze_timeline_cuts` permanently protect placed timeline clips by setting `pinned = true`.
+- **Status Reporting (Charter Rule 11)**: `PipelineStatus` provides human-readable progress summaries.
+
 ---
 
 ## Active Milestone & Next Target
 
 - **Current Milestone**: Milestone A: First Cut (CLI)
-- **Current Stage**: **Stage 5: Footage Analysis**
-- **Goal for Stage 5**: Media crate footage analysis pipeline: content fingerprinting (file size + start/mid/end hash), Stage 0 container probe, Stage 1 quick pass (thumbnails, coarse scene cuts, rough motion), Stage 2 full pass (exact scene boundaries, black range detection, motion curve), and content-addressed disk caching.
+- **Current Stage**: **Stage 7: GPU Render Core**
+- **Goal for Stage 7**: `wgpu` compositor in `ventacore-render` with WGSL shaders (hard cuts, cross dissolves, transforms, letterboxing/fit modes) and CPU reference oracle for automated verification.
 
 ---
 

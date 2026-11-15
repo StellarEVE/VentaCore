@@ -93,17 +93,19 @@ Before modifying code, read these documents in order:
   - Windows build environment configuration (`FFMPEG_DLL_PATH`, `FFMPEG_INCLUDE_DIR`, `LIBCLANG_PATH`).
   - *Exit gate passed*: Real frames decoded and encoded; hardware capability report accurately identifies adapters and proven codecs; VFR streams indexed to exact ticks; rotation and 10-bit color verified; software fallbacks proven.
 
-- [ ] **Stage 5: Footage Analysis** (Next up)
-  - Media crate: content fingerprinting (size + start/mid/end hash).
-  - Stage 0 (probe container), Stage 1 (quick pass thumbnails/scenes/motion), Stage 2 (full pass exact scenes, black ranges, motion, best moments).
-  - Content-addressed disk cache under fingerprint.
+- [x] **Stage 5: Footage Analysis** (Completed: Stage 5 & 6 checkpoint)
+  - Media crate: content fingerprinting (size + start/mid/end hash in < 1ms).
+  - Staged analysis pipeline: Stage 0 (probe container), Stage 1 (quick pass thumbnails/coarse scenes/motion), Stage 2 (full pass exact scenes, black ranges, motion, best moments).
+  - Content-addressed disposable disk cache under fingerprint with full purge support.
+  - *Exit gate passed*: Fingerprints invariant across moves; thumbnails generated at 160x90; exact scene cuts and black ranges detected matching ground truth; cache round-trip verified.
 
-- [ ] **Stage 6: Pipeline and Live Cut Building**
-  - Conductor in `ventacore-engine`: background jobs, channels, cancellation tokens.
-  - Breadth-before-depth execution: song analysis -> quick passes on all videos -> emit provisional cut -> full passes in priority order -> refine provisional clips.
-  - Freeze action and status reporting.
+- [x] **Stage 6: Pipeline and Live Cut Building** (Completed: Stage 5 & 6 checkpoint)
+  - Conductor in `ventacore-engine`: background worker threads, channels, and cooperative cancellation tokens.
+  - Breadth-before-depth execution: song analysis -> quick passes on all videos -> emit provisional live cut -> prioritized full passes on placed timeline clips -> refine provisional clips.
+  - Freeze action (`freeze_timeline_cuts`, `unfreeze_timeline_cuts`) and status reporting.
+  - *Exit gate passed*: Provisional cut emitted live after quick passes; prioritized full passes refine timeline cuts; cooperative cancellation halts cleanly; freeze action pins clips permanently.
 
-- [ ] **Stage 7: GPU Render Core**
+- [ ] **Stage 7: GPU Render Core** (Next up)
   - `wgpu` compositor in `ventacore-render` with WGSL shaders.
   - Hard cuts, cross dissolves, transforms, fit modes (crop, black bars, blur padding).
   - Resolution tiers (Full, Half, Quarter, Eighth).

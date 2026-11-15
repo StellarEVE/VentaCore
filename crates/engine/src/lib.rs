@@ -3,8 +3,14 @@
 //! Conductor for background analysis pipelines, live cut planning,
 //! and job orchestration.
 
+pub mod pipeline;
 pub mod planner;
 
+pub use pipeline::{
+    freeze_timeline_cuts, run_conductor_pipeline, spawn_conductor, unfreeze_timeline_cuts,
+    CancellationToken, ConductorConfig, ConductorHandle, ConductorUpdate, PipelineStage,
+    PipelineStatus, ProgressEvent,
+};
 pub use planner::{
     apply_plan_to_project, compute_open_timeline_intervals, compute_valid_source_intervals,
     get_preset_settings, plan_montage, CandidateClip, DeterministicRng, MontagePlan, PlanSlot,

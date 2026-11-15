@@ -84,19 +84,39 @@ This document captures the full context of the development sessions up to **Stag
 - Windows build environment configuration via `PlatformEnvironmentConfig` (`FFMPEG_DLL_PATH`, `FFMPEG_INCLUDE_DIR`, `LIBCLANG_PATH`).
 - Integration tests in `crates/platform/tests/platform_tests.rs`.
 
+### Stage 5: Footage Analysis
+- Fast content fingerprinting (`compute_content_fingerprint` in `crates/media/src/fingerprint.rs`) hashing file size + 64KB start/mid/end chunks in < 1ms.
+- Staged analysis pipeline:
+  - Stage 0 Probe (`probe.rs`): Instant container probe yielding `ProbeData`.
+  - Stage 1 Quick Pass (`quick_pass.rs`): Sparse sampling (1 fps), filmstrip thumbnails (160x90), provisional scene cut and motion estimation.
+  - Stage 2 Full Pass (`full_pass.rs`): Dense sequential decode, exact shot cut boundary detection, black/dark screen interval detection, dense motion curve, highlight moments extraction.
+- Content-addressed disposable cache (`cache.rs`): Stores `analysis.json` and thumbnails under `<cache_dir>/<fingerprint>/`, with full cache purge support.
+- Integration tests in `crates/media/tests/media_tests.rs`.
+
+### Stage 6: Pipeline and Live Cut Building
+- Breadth-before-depth conductor (`crates/engine/src/pipeline/conductor.rs`):
+  1. Song analysis.
+  2. Quick pass across all videos.
+  3. Live provisional cut assembly.
+  4. Prioritized full passes on placed timeline clips.
+  5. Cut refinement.
+- Channels & progress streaming via `ConductorUpdate` (`Progress`, `ProvisionalCut`, `RefinedCut`, `Finished`).
+- Cooperative cancellation (`cancellation.rs`) via thread-safe `CancellationToken`.
+- Freeze action (`freeze.rs`): `freeze_timeline_cuts` and `unfreeze_timeline_cuts` permanently protect clips by setting `pinned = true`.
+- Pipeline status reporting (`status.rs`): Human-readable progress summaries.
+- Integration tests in `crates/engine/tests/pipeline_tests.rs`.
+
 ---
 
 ## 3. Current Test & Build Status
-- **Workspace Tests**: `cargo test --workspace` -> **54 tests passed; 0 failed**.
-- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in 4.85s**.
+- **Workspace Tests**: `cargo test --workspace` -> **65 tests passed; 0 failed**.
+- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in 10.59s**.
 
 ---
 
-## 4. Next Task: Stage 5 (Footage Analysis)
-The next task to build is **Stage 5: Footage Analysis** inside `crates/media`:
-1. Media crate footage analysis pipeline:
-   - Content fingerprinting (file size + start/mid/end hash).
-   - Stage 0: Probe container (duration, resolution, fps, rotation, audio tracks).
-   - Stage 1: Quick pass (thumbnails, coarse scene cuts, rough motion estimate).
-   - Stage 2: Full pass (exact scene boundaries, black range detection, dense motion curve, best moments).
-2. Content-addressed disk cache under fingerprint.
+## 4. Next Task: Stage 7 (GPU Render Core)
+The next task to build is **Stage 7: GPU Render Core** inside `crates/render`:
+1. `wgpu` compositor in `ventacore-render` with WGSL shaders.
+2. Hard cuts, cross dissolves, transforms, fit modes (crop, black bars, blur padding).
+3. Resolution tiers (Full, Half, Quarter, Eighth).
+4. Processor reference oracle (max difference $\le 1$ color step).

@@ -137,19 +137,17 @@ impl VideoDecoder for SyntheticVideoDecoder {
             }
 
             _ => {
-                // 8-bit RGBA test pattern with identifiable color bar
+                // Fast 8-bit RGBA test pattern with moving color bar
                 let pixel_count = (width * height) as usize;
                 let mut data = vec![0u8; pixel_count * 4];
-                let color_shift = (self.current_frame_idx * 10) % 256;
+                let color_shift = ((self.current_frame_idx * 10) % 256) as u8;
+                let r_base = color_shift;
+                let g_base = ((self.current_frame_idx * 5) % 256) as u8;
+                let b_base = color_shift.wrapping_add(128);
 
-                for row in 0..height as usize {
-                    for col in 0..width as usize {
-                        let idx = (row * width as usize + col) * 4;
-                        data[idx] = ((col * 255 / width as usize) + color_shift) as u8;
-                        data[idx + 1] = (row * 255 / height as usize) as u8;
-                        data[idx + 2] = (128 + color_shift) as u8;
-                        data[idx + 3] = 255;
-                    }
+                let pixel = [r_base, g_base, b_base, 255];
+                for chunk in data.chunks_exact_mut(4) {
+                    chunk.copy_from_slice(&pixel);
                 }
 
                 VideoFrame {
@@ -209,9 +207,9 @@ impl PlatformVideoDecoder {
 
         // Initialize decoder wrapper
         let decoder = SyntheticVideoDecoder::new(
-            Tick::from_seconds(30),
-            1920,
-            1080,
+            Tick::from_seconds(10),
+            640,
+            360,
             30,
             1,
             Rotation::None,
