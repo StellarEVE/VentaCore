@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-11-15  
 **Current Branch**: `main`  
-**Latest Verified Commit**: (Stage 8 & 9 checkpoint)  
+**Latest Verified Commit**: (Stage 10 checkpoint — Milestone A Completed)  
 **Repository**: [https://github.com/StellarEVE/VentaCore](https://github.com/StellarEVE/VentaCore)
 
 ---
@@ -12,8 +12,8 @@
 | Check | Result | Details |
 |---|---|---|
 | **Workspace Compilation (Debug)** | **PASS** | All 8 crates compiled with zero warnings/errors. |
-| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed in 42.92s. |
-| **Unit & Integration Tests** | **PASS** | 86 tests passed; 0 failed; 0 ignored. |
+| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed cleanly in 1m 02s. |
+| **Unit & Integration Tests** | **PASS** | 87 tests passed; 0 failed; 0 ignored. |
 | **Layer Architecture Enforcement** | **PASS** | Strict downward dependency direction and border checks verified. |
 | **Hardware Graphics Verification** | **PASS** | Verified on reference target NVIDIA GeForce MX150 (Charter Rule 5: max diff = 0 vs CPU oracle). |
 | **Property-Based Invariant Fuzzing** | **PASS** | 100 randomized multi-command test runs verified with `proptest`. |
@@ -92,25 +92,37 @@
 - **2D Transforms**: Position, scale, rotation, and opacity with 4x4 transform matrices.
 - **Resolution Tiers**: `Full` (1.0x), `Half` (0.5x), `Quarter` (0.25x), `Eighth` (0.125x) with even dimension alignment for video codec safety.
 
-### Stage 8: Preview Speed: Monitor Resolution & Proxies (This Checkpoint)
+### Stage 8: Preview Speed: Monitor Resolution & Proxies (`183fa15`)
 - **Intra-Frame Proxies (`ProxyTier`)**: Downscaled intra-frame proxy generation (`generate_intra_proxy`) cached in `MediaCache` under `<fingerprint>/proxies/<tier>/`. Enables $O(1)$ instant random seeking without sequential GOP decoding delays.
 - **In-Memory Frame Cache (`FrameCache`)**: Bounded LRU in-memory cache indexed by `(source_id, time, tier)` with configurable byte budget (default 128 MB) and automatic eviction.
 - **Dynamic Performance Governor (`PerformanceGovernor`)**: Automatically selects resolution tiers based on viewport dimensions and monitors frame render latency, stepping down resolution during frame drops to guarantee smooth real-time playback.
 - **Audio Master Clock (`MasterClock`)**: Audio output sample counter drives the master timebase (Charter Rule 2 whole-number tick arithmetic). Video sync policy (`SyncAction::Display`, `Drop`, `Repeat`) keeps video strictly synchronized within $\pm \frac{1}{2}$ frame interval.
 
-### Stage 9: Export and Render Cache (This Checkpoint)
+### Stage 9: Export and Render Cache (`183fa15`)
 - **Multitrack Audio Mixer (`AudioMixer`)**: Mixes song audio and video clip audio with individual track gain, master volume, linear fade-in and fade-out envelopes, mute/solo flags, and soft-limiting to eliminate digital clipping.
 - **Content-Addressed Render Cache (`RenderCache`)**: Disk cache for composite frames keyed by deterministic FNV-1a hashes of source fingerprint, timestamps, fit mode, transform, and resolution tier. Supports full cache purge.
 - **Full-Resolution Timeline Export (`export_timeline`)**: Renders timeline frame-by-frame with active clip selection, transition blending, and video encoding.
 - **Atomic Export Finalization (Charter Rule 9 & 11)**: Writes export stream to `<output_path>.part`; atomically renames to final destination on 100% completion; automatically removes partial file on cancellation or error.
 
+### Stage 10: Command Line (Milestone A Exit Gate — This Checkpoint)
+- **`ventacore-cli` Executable**: Production command-line tool with dedicated subcommands:
+  - `capabilities`: Inspects and tests hardware adapters, decoders, and encoders.
+  - `analyze-song`: Computes tempo, beats, bars, phrases, and loudness change points from any audio file.
+  - `plan`: Deterministically plans a beat-synced cut timeline from song and footage.
+  - `export`: Exports an existing project timeline to full-quality MP4.
+  - `run`: Complete end-to-end command executing song analysis -> footage analysis -> montage planning -> timeline export.
+  - `purge-cache`: Purges disposable media and render caches (Charter Rule 9).
+- **End-to-End Integration Verification (`end_to_end_test.rs`)**: Verified complete automated pipeline on synthetic click-train and video fixtures.
+- **MILESTONE A (Stages 0 to 10) FULLY ACHIEVED**.
+
 ---
 
 ## Active Milestone & Next Target
 
-- **Current Milestone**: Milestone A: First Cut (CLI)
-- **Next Stage**: **Stage 10: Command Line (Milestone A Exit Gate)**
-- **Goal for Stage 10**: CLI frontend (`ventacore-cli`), subcommands (`capabilities`, `analyze-song`, `plan`, `export`, `run`, `purge-cache`), and end-to-end beat-synced test.
+- **Completed Milestone**: **Milestone A: First Cut (CLI)** (Stages 0 to 10)
+- **Next Milestone**: **Milestone B: Watch It Build (Desktop Shell)** (Stages 11 to 14)
+- **Next Stage**: **Stage 11: App Shell**
+- **Goal for Stage 11**: `egui`/`eframe` native desktop shell, startup logging, headless graphics probe, four-page footer navigation (Media, Cut, Edit, Export), and dark silver/black theme with teal highlight.
 
 ---
 

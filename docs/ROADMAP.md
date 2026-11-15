@@ -126,16 +126,18 @@ Before modifying code, read these documents in order:
   - Atomic export finalization (write to `.part` file, rename on completion; delete on error or cancellation).
   - *Exit gate passed*: 3 mixer tests, render cache test, and atomic export integration tests passed.
 
-- [ ] **Stage 10: Command Line (Milestone A Exit Gate)** (Next up)
-  - `ventacore-cli` front end: capabilities, analyze-song, plan, export, run, purge-cache.
-  - End-to-end integration test: song + videos -> beat-synced exported MP4.
-  - **Milestone A Pause**: Owner review of cuts and CLI execution.
+- [x] **Stage 10: Command Line (Milestone A Exit Gate)** (Completed: Milestone A checkpoint)
+  - `ventacore-cli` front end: `capabilities`, `analyze-song`, `plan`, `export`, `run`, `purge-cache`.
+  - End-to-end integration test (`end_to_end_test.rs`): song + videos -> beat-synced exported MP4.
+  - Verification: 87 tests passing across 8 crates, full release build cleanly compiled.
+  - Cleaned up all residue files; retired redundant `docs/SESSION_HANDOFF.md`.
+  - **Milestone A Exit Gate Passed**: Ready for owner review of cuts and CLI execution.
 
 ---
 
 ### Milestone B: Watch It Build (Desktop Shell) — Stages 11 to 14
 
-- [ ] **Stage 11: App Shell**
+- [ ] **Stage 11: App Shell** (Next up)
   - `egui`/`eframe` native shell in `ventacore-app`.
   - Startup logging, headless graphics probe, four-page footer navigation (Media, Cut, Edit, Export).
   - Dark silver/black theme with teal highlight and rounded corners.
