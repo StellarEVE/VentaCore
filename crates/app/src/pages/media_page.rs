@@ -525,7 +525,7 @@ impl MediaPage {
                                     (BG_DEEP, Stroke::new(1.0_f32, BORDER))
                                 };
 
-                                Frame::none()
+                                let row_resp = Frame::none()
                                     .fill(bg)
                                     .stroke(stroke)
                                     .rounding(Rounding::same(4.0))
@@ -556,6 +556,10 @@ impl MediaPage {
                                             );
                                         });
                                     });
+
+                                if row_resp.response.interact(egui::Sense::click()).clicked() {
+                                    state.selected_asset_id = Some(asset_id);
+                                }
                                 ui.add_space(4.0);
                             }
                         });

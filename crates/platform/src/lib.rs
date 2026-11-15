@@ -22,7 +22,10 @@ pub use capabilities::{
 };
 pub use classify::{classify, MediaClassification};
 pub use config::PlatformEnvironmentConfig;
-pub use decoder::{PlatformVideoDecoder, SyntheticVideoDecoder};
+pub use decoder::{
+    find_ffmpeg_binary, find_ffprobe_binary, probe_video_with_ffprobe, FfmpegVideoDecoder,
+    PlatformVideoDecoder, SyntheticVideoDecoder,
+};
 pub use encoder::SyntheticVideoEncoder;
 pub use error::PlatformError;
 pub use pixel::{rotate_rgba8, yuv420p10le_to_rgba8, yuv420p_to_rgba8};

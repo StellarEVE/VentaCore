@@ -125,17 +125,68 @@ pub fn classify<P: AsRef<Path>>(path: P) -> MediaClassification {
 
     // 6. MP4 / MOV / ISO BMFF Check
     if let Some(res) = probe_isobmff(&mut file, buf, file_len) {
-        return res;
+        return refine_video_classification(path_ref, res);
     }
 
     // 7. Matroska / WebM Check
     if let Some(res) = probe_matroska(buf, file_len) {
-        return res;
+        return refine_video_classification(path_ref, res);
+    }
+
+    // 8. General fallback probe with ffprobe for other video formats (AVI, etc.)
+    if let Some(ffprobe_exe) = crate::decoder::find_ffprobe_binary() {
+        if let Ok(meta) = crate::decoder::probe_video_with_ffprobe(path_ref, &ffprobe_exe) {
+            if meta.width > 0 && meta.height > 0 {
+                return MediaClassification::Video {
+                    width: meta.width,
+                    height: meta.height,
+                    fps_num: meta.fps_num,
+                    fps_den: meta.fps_den,
+                    duration: meta.duration,
+                    has_audio: meta.has_audio,
+                };
+            }
+        }
     }
 
     // Default unrecognized
     MediaClassification::Unsupported {
         reason: "Unrecognized media container or unsupported codec".into(),
+    }
+}
+
+fn refine_video_classification(path: &Path, raw: MediaClassification) -> MediaClassification {
+    match raw {
+        MediaClassification::Video {
+            width,
+            height,
+            fps_num,
+            fps_den,
+            duration,
+            has_audio,
+        } => {
+            if let Some(ffprobe_exe) = crate::decoder::find_ffprobe_binary() {
+                if let Ok(meta) = crate::decoder::probe_video_with_ffprobe(path, &ffprobe_exe) {
+                    return MediaClassification::Video {
+                        width: meta.width,
+                        height: meta.height,
+                        fps_num: meta.fps_num,
+                        fps_den: meta.fps_den,
+                        duration: meta.duration,
+                        has_audio: meta.has_audio,
+                    };
+                }
+            }
+            MediaClassification::Video {
+                width,
+                height,
+                fps_num,
+                fps_den,
+                duration,
+                has_audio,
+            }
+        }
+        other => other,
     }
 }
 

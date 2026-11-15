@@ -322,3 +322,58 @@ fn test_media_classifier_with_mp3_cover_art_mp4_and_text() {
     let _ = std::fs::remove_file(&mp4_no_sound_path);
     let _ = std::fs::remove_file(&txt_path);
 }
+
+#[test]
+fn test_real_video_file_decoding_with_ffmpeg() {
+    use ventacore_platform::{find_ffmpeg_binary, PlatformVideoDecoder, VideoDecoder};
+
+    let ffmpeg_exe = match find_ffmpeg_binary() {
+        Some(exe) => exe,
+        None => return, // Skip if ffmpeg binary not installed on this machine
+    };
+
+    let temp_dir = std::env::temp_dir();
+    let vid_path = temp_dir.join(format!("real_vid_test_{}.mp4", std::process::id()));
+
+    // Generate a 2-second 320x240 test video with ffmpeg
+    let mut cmd = std::process::Command::new(&ffmpeg_exe);
+    cmd.args(&[
+        "-f", "lavfi",
+        "-i", "testsrc=duration=2:size=320x240:rate=25",
+        "-pix_fmt", "yuv420p",
+        "-y",
+    ]);
+    cmd.arg(&vid_path);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000);
+    }
+    let status = cmd.status().expect("generate test video with ffmpeg");
+    assert!(status.success(), "ffmpeg video generation must succeed");
+
+    // Open video with PlatformVideoDecoder
+    let mut decoder = PlatformVideoDecoder::open(&vid_path).expect("open real video with PlatformVideoDecoder");
+
+    // 1. Check metadata
+    let meta = decoder.metadata();
+    assert_eq!(meta.width, 320, "Metadata width must match real video (320), not synthetic 640");
+    assert_eq!(meta.height, 240, "Metadata height must match real video (240), not synthetic 360");
+    let dur_secs = meta.duration.to_seconds_f64();
+    assert!((dur_secs - 2.0).abs() < 0.2, "Metadata duration must match real video (~2.0s), not synthetic 10s");
+
+    // 2. Decode next frame
+    let frame1 = decoder.decode_next_frame().expect("decode frame 1").expect("frame 1 must exist");
+    assert_eq!(frame1.width, 320);
+    assert_eq!(frame1.height, 240);
+    assert_eq!(frame1.data.len(), 320 * 240 * 4);
+
+    // 3. Seek to 1.0s and decode
+    decoder.seek(ventacore_core::Tick::from_seconds(1)).expect("seek to 1s");
+    let frame_seek = decoder.decode_next_frame().expect("decode at 1s").expect("frame at 1s must exist");
+    assert_eq!(frame_seek.width, 320);
+    assert_eq!(frame_seek.height, 240);
+
+    // Cleanup
+    let _ = std::fs::remove_file(&vid_path);
+}
