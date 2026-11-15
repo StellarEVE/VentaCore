@@ -4,10 +4,14 @@
 //! and job orchestration.
 
 pub mod export;
+pub mod import;
 pub mod pipeline;
 pub mod planner;
 
 pub use export::{export_timeline, ExportConfig, ExportError, ExportProgress, ExportSummary};
+pub use import::{
+    apply_import_plan, plan_import, ImportAction, ImportChoicePrompt, ImportDestination, ImportPlan,
+};
 pub use pipeline::{
     freeze_timeline_cuts, run_conductor_pipeline, spawn_conductor, unfreeze_timeline_cuts,
     CancellationToken, ConductorConfig, ConductorHandle, ConductorUpdate, PipelineStage,

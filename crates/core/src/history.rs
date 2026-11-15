@@ -71,6 +71,17 @@ impl History {
         Ok(())
     }
 
+    /// Pushes a new project state onto the undo stack and clears the redo stack.
+    /// Used for atomic batch operations.
+    pub fn record(&mut self, new_state: Project) {
+        self.past.push(std::mem::replace(&mut self.present, new_state));
+        self.future.clear();
+
+        if self.past.len() > self.max_depth {
+            self.past.remove(0);
+        }
+    }
+
     /// Reverts to the previous project state.
     /// Returns `true` if an undo was performed, `false` if undo stack was empty.
     pub fn undo(&mut self) -> bool {

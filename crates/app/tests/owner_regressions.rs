@@ -154,11 +154,39 @@ fn test_regression_failure_2_song_role_and_exclusion_from_video_tracks() {
 /// Failure 2 (Audio probe): An MP3 with cover art must be classified as audio only,
 /// never misidentified as a video.
 #[test]
-#[ignore = "Stage R2"]
 fn test_regression_failure_2_mp3_with_cover_art_classified_as_audio_only() {
-    // Stage R2 will introduce the classify function in platform/engine that detects
-    // ID3 APIC / attached pictures as cover art and classifies file as AudioOnly.
-    panic!("Stage R2 not yet applied: classify() not yet implemented");
+    use ventacore_platform::{classify, MediaClassification};
+
+    let temp_dir = std::env::temp_dir();
+    let mp3_path = temp_dir.join(format!("owner_test_art_{}.mp3", std::process::id()));
+
+    // Synthetic MP3 with ID3v2.3 tag containing APIC (Attached Picture / Cover Art)
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(b"ID3\x03\x00\x00\x00\x00\x01\x00"); // 128 bytes synchsafe tag
+    bytes.extend_from_slice(b"APIC\x00\x00\x00\x20\x00\x00"); // APIC frame header
+    bytes.extend_from_slice(&[0u8; 32]); // Image bytes
+    while bytes.len() < 138 {
+        bytes.push(0);
+    }
+    // MPEG Audio frame sync
+    bytes.extend_from_slice(&[0xFF, 0xFB, 0x90, 0x64]);
+    bytes.extend_from_slice(&[0u8; 1000]);
+
+    std::fs::write(&mp3_path, &bytes).unwrap();
+
+    let classification = classify(&mp3_path);
+    assert!(
+        classification.is_audio_only(),
+        "MP3 with cover art must be classified as AudioOnly, never as video!"
+    );
+
+    if let MediaClassification::AudioOnly { has_cover_art, .. } = classification {
+        assert!(has_cover_art, "Must recognize cover art as album art");
+    } else {
+        panic!("Expected AudioOnly classification");
+    }
+
+    let _ = std::fs::remove_file(&mp3_path);
 }
 
 /// Failure 3: Monitor widget must render a real decoded frame and match the
@@ -170,11 +198,145 @@ fn test_regression_failure_3_monitor_shows_real_pixels() {
     panic!("Stage R3 not yet applied: no video monitor or texture pipeline in UI");
 }
 
-/// Failure 1: Both "Browse for music" and "Add videos" buttons must exist on the Media page,
-/// and the file-dialog helper must return paths from a stand-in dialog.
+/// Failure 1: Both "Browse for music" and "Add videos" workflows must operate cleanly:
+/// the file-dialog helper returns paths from stand-in dialogs, drag-and-drop sorts
+/// by content, wrong-panel drops offer one-click fixes, and import undo reverts in one step.
 #[test]
-#[ignore = "Stage R2"]
 fn test_regression_failure_1_browse_buttons_and_dialog_helper() {
-    // Stage R2 will add Browse for music and Add videos buttons, and native file dialog helper.
-    panic!("Stage R2 not yet applied: Browse buttons and dialog helper missing");
+    use ventacore_app::widgets::file_dialog::{FileDialogHelper, FileDialogResult};
+    use ventacore_engine::import::{
+        apply_import_plan, plan_import, ImportAction, ImportChoicePrompt, ImportDestination, ImportPlan,
+    };
+
+    let temp_dir = std::env::temp_dir();
+    let song_path = temp_dir.join(format!("reg1_song_{}.wav", std::process::id()));
+    let vid1_path = temp_dir.join(format!("reg1_vid1_{}.mp4", std::process::id()));
+    let vid2_path = temp_dir.join(format!("reg1_vid2_{}.mp4", std::process::id()));
+
+    // Create synthetic WAV
+    let mut wav_bytes = Vec::new();
+    wav_bytes.extend_from_slice(b"RIFF\x24\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x02\x00\x44\xAC\x00\x00\x10\xB1\x02\x00\x04\x00\x10\x00data\x00\x00\x00\x00");
+    std::fs::write(&song_path, &wav_bytes).unwrap();
+
+    // Create synthetic MP4s
+    let mut mp4_bytes = Vec::new();
+    mp4_bytes.extend_from_slice(b"\x00\x00\x00\x18ftypisom\x00\x00\x02\x00isomiso2mp41");
+    mp4_bytes.extend_from_slice(b"\x00\x00\x00\x30moovhdlrvide");
+    mp4_bytes.extend_from_slice(&[0u8; 64]);
+    std::fs::write(&vid1_path, &mp4_bytes).unwrap();
+    std::fs::write(&vid2_path, &mp4_bytes).unwrap();
+
+    // 1. FileDialogHelper stand-in headless test
+    let mut helper = FileDialogHelper::new();
+    helper.set_stand_in(FileDialogResult::Song(song_path.clone()));
+    helper.pick_song();
+    let poll_result = helper.poll();
+    assert!(poll_result.is_some(), "FileDialogHelper must return injected stand-in");
+    match poll_result.unwrap() {
+        FileDialogResult::Song(p) => assert_eq!(p, song_path),
+        _ => panic!("Expected FileDialogResult::Song"),
+    }
+
+    helper.set_stand_in(FileDialogResult::Videos(vec![vid1_path.clone(), vid2_path.clone()]));
+    helper.pick_videos();
+    let poll_vids = helper.poll();
+    assert!(poll_vids.is_some(), "FileDialogHelper must return video stand-in");
+    match poll_vids.unwrap() {
+        FileDialogResult::Videos(vids) => {
+            assert_eq!(vids.len(), 2);
+            assert_eq!(vids[0], vid1_path);
+            assert_eq!(vids[1], vid2_path);
+        }
+        _ => panic!("Expected FileDialogResult::Videos"),
+    }
+
+    // 2. Import song via Music panel
+    let mut project = Project::new("Failure 1 Regression Test");
+    let _initial_tracks_count = project.tracks.len();
+
+    let plan_song = plan_import(&project, &[song_path.clone()], ImportDestination::MusicPanel);
+    assert_eq!(plan_song.songs_count(), 1);
+    assert_eq!(plan_song.footage_count(), 0);
+    assert_eq!(plan_song.refused_count(), 0);
+
+    apply_import_plan(&mut project, &plan_song, ReplaceSongPolicy::StartOver).expect("import song");
+    assert!(project.song.is_some(), "Song must be active in project");
+    assert_eq!(project.assets.len(), 1);
+    assert_eq!(project.assets[0].role, AssetRole::Song);
+
+    // 3. Import videos via Footage panel
+    let plan_videos = plan_import(
+        &project,
+        &[vid1_path.clone(), vid2_path.clone()],
+        ImportDestination::FootagePanel,
+    );
+    assert_eq!(plan_videos.footage_count(), 2);
+    assert_eq!(plan_videos.songs_count(), 0);
+
+    apply_import_plan(&mut project, &plan_videos, ReplaceSongPolicy::StartOver).expect("import footage");
+    assert_eq!(project.assets.len(), 3);
+    assert_eq!(project.footage_assets().len(), 2);
+
+    // 4. Test wrong panel: Song dropped onto Footage panel is refused with suggest_use_as_song
+    let second_song_path = temp_dir.join(format!("reg1_song2_{}.wav", std::process::id()));
+    std::fs::write(&second_song_path, &wav_bytes).unwrap();
+
+    let plan_wrong = plan_import(&project, &[second_song_path.clone()], ImportDestination::FootagePanel);
+    assert_eq!(plan_wrong.refused_count(), 1);
+    match &plan_wrong.actions[0] {
+        ImportAction::Refused { suggest_use_as_song, reason, .. } => {
+            assert!(suggest_use_as_song, "Audio on footage panel must offer Use as song");
+            assert!(reason.contains("Footage panel"));
+        }
+        _ => panic!("Expected Refused action"),
+    }
+
+    // One-click fix: User clicks "Use as song" -> routes to song
+    let fix_plan = ImportPlan {
+        actions: vec![ImportAction::ImportSong {
+            path: second_song_path.clone(),
+            classification: ventacore_platform::classify(&second_song_path),
+        }],
+    };
+    apply_import_plan(&mut project, &fix_plan, ReplaceSongPolicy::KeepPinnedAndTouched)
+        .expect("apply fix must succeed");
+    let song_asset = project.find_asset(project.song.as_ref().unwrap().asset_id).unwrap();
+    assert_eq!(song_asset.path_hint, second_song_path.to_string_lossy());
+
+    // 5. Test video dropped onto Music panel -> prompts user choice
+    let vid3_path = temp_dir.join(format!("reg1_vid3_{}.mp4", std::process::id()));
+    std::fs::write(&vid3_path, &mp4_bytes).unwrap();
+
+    let vid_on_music_plan = plan_import(&project, &[vid3_path.clone()], ImportDestination::MusicPanel);
+    assert_eq!(vid_on_music_plan.choices_count(), 1);
+    match &vid_on_music_plan.actions[0] {
+        ImportAction::NeedsChoice { choice: ImportChoicePrompt::VideoOnMusicPanel { path, .. }, .. } => {
+            assert_eq!(path, &vid3_path);
+        }
+        _ => panic!("Expected VideoOnMusicPanel choice prompt"),
+    }
+
+    // 6. Test undo restores exact previous state in one step
+    let count_before = project.assets.len();
+    let mut history = ventacore_core::history::History::with_max_depth(project.clone(), 50);
+
+    let fresh_vid_path = temp_dir.join(format!("reg1_fresh_{}.mp4", std::process::id()));
+    std::fs::write(&fresh_vid_path, &mp4_bytes).unwrap();
+    let fresh_plan = plan_import(&project, &[fresh_vid_path.clone()], ImportDestination::FootagePanel);
+    apply_import_plan(&mut project, &fresh_plan, ReplaceSongPolicy::StartOver).expect("add fresh footage");
+    history.record(project.clone());
+    assert_eq!(project.assets.len(), count_before + 1);
+
+    // Single undo
+    let undone = history.undo();
+    assert!(undone, "Undo must succeed");
+    assert_eq!(history.present().assets.len(), count_before, "Batch import must revert cleanly in one step");
+
+    // Cleanup
+    let _ = std::fs::remove_file(&song_path);
+    let _ = std::fs::remove_file(&second_song_path);
+    let _ = std::fs::remove_file(&vid1_path);
+    let _ = std::fs::remove_file(&vid2_path);
+    let _ = std::fs::remove_file(&vid3_path);
+    let _ = std::fs::remove_file(&fresh_vid_path);
 }

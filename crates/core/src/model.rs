@@ -408,4 +408,14 @@ impl Project {
         list.sort_by_key(|i| i.timeline_start);
         list
     }
+
+    /// Returns all footage assets in the project.
+    pub fn footage_assets(&self) -> Vec<&Asset> {
+        self.assets.iter().filter(|a| a.role == AssetRole::Footage).collect()
+    }
+
+    /// Returns the active song asset if one is set.
+    pub fn song_asset(&self) -> Option<&Asset> {
+        self.song.as_ref().and_then(|s| self.find_asset(s.asset_id))
+    }
 }

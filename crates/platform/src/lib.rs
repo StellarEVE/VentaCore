@@ -4,6 +4,7 @@
 //! decoding and encoding, and trial capability verification.
 
 pub mod capabilities;
+pub mod classify;
 pub mod config;
 pub mod decoder;
 pub mod encoder;
@@ -17,6 +18,7 @@ pub use capabilities::{
     probe_hardware_capabilities, run_decoder_trial, run_encoder_trial, CodecSupport,
     GraphicsAdapterInfo, HardwareCapabilityReport, TrialStatus,
 };
+pub use classify::{classify, MediaClassification};
 pub use config::PlatformEnvironmentConfig;
 pub use decoder::{PlatformVideoDecoder, SyntheticVideoDecoder};
 pub use encoder::SyntheticVideoEncoder;

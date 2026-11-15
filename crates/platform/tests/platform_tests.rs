@@ -249,3 +249,76 @@ fn test_platform_environment_config_probing() {
     // Probing should never panic and should report any discovered DLLs or paths
     println!("Platform environment config: {:?}", config);
 }
+
+#[test]
+fn test_media_classifier_with_mp3_cover_art_mp4_and_text() {
+    let temp_dir = std::env::temp_dir();
+    let mp3_path = temp_dir.join(format!("test_art_{}.mp3", std::process::id()));
+    let mp4_sound_path = temp_dir.join(format!("test_sound_{}.mp4", std::process::id()));
+    let mp4_no_sound_path = temp_dir.join(format!("test_nosound_{}.mp4", std::process::id()));
+    let txt_path = temp_dir.join(format!("test_doc_{}.txt", std::process::id()));
+
+    // 1. Synthetic MP3 with ID3v2 APIC Cover Art frame
+    let mut mp3_bytes = Vec::new();
+    // ID3 header: "ID3", ver 3.0, flags 0, synchsafe size 128 bytes
+    mp3_bytes.extend_from_slice(b"ID3\x03\x00\x00\x00\x00\x01\x00");
+    // APIC frame
+    mp3_bytes.extend_from_slice(b"APIC\x00\x00\x00\x20\x00\x00");
+    mp3_bytes.extend_from_slice(&[0u8; 32]); // Image payload placeholder
+    while mp3_bytes.len() < 138 {
+        mp3_bytes.push(0);
+    }
+    // MPEG Frame Sync (MPEG1 Layer3 44.1kHz 128kbps stereo)
+    mp3_bytes.extend_from_slice(&[0xFF, 0xFB, 0x90, 0x64]);
+    mp3_bytes.extend_from_slice(&[0u8; 1000]);
+    std::fs::write(&mp3_path, &mp3_bytes).unwrap();
+
+    // 2. Synthetic MP4 with Video and Audio
+    let mut mp4_sound_bytes = Vec::new();
+    mp4_sound_bytes.extend_from_slice(b"\x00\x00\x00\x18ftypisom\x00\x00\x02\x00isomiso2mp41");
+    mp4_sound_bytes.extend_from_slice(b"\x00\x00\x00\x40moov");
+    mp4_sound_bytes.extend_from_slice(b"hdlrvide");
+    mp4_sound_bytes.extend_from_slice(&[0u8; 16]);
+    mp4_sound_bytes.extend_from_slice(b"hdlrsoun");
+    mp4_sound_bytes.extend_from_slice(&[0u8; 64]);
+    std::fs::write(&mp4_sound_path, &mp4_sound_bytes).unwrap();
+
+    // 3. Synthetic MP4 with Video ONLY (no audio)
+    let mut mp4_nosound_bytes = Vec::new();
+    mp4_nosound_bytes.extend_from_slice(b"\x00\x00\x00\x18ftypisom\x00\x00\x02\x00isomiso2mp41");
+    mp4_nosound_bytes.extend_from_slice(b"\x00\x00\x00\x30moov");
+    mp4_nosound_bytes.extend_from_slice(b"hdlrvide");
+    mp4_nosound_bytes.extend_from_slice(&[0u8; 64]);
+    std::fs::write(&mp4_no_sound_path, &mp4_nosound_bytes).unwrap();
+
+    // 4. Plain Text File
+    std::fs::write(&txt_path, "VentaCore Editor: Plain Text Readme File\nNot video or audio.\n").unwrap();
+
+    // Classify and Assert
+    let c_mp3 = classify(&mp3_path);
+    assert!(c_mp3.is_audio_only(), "MP3 with cover art must be classified as AudioOnly!");
+    if let MediaClassification::AudioOnly { has_cover_art, .. } = c_mp3 {
+        assert!(has_cover_art, "MP3 must detect APIC cover art");
+    }
+
+    let c_sound = classify(&mp4_sound_path);
+    assert!(c_sound.is_video(), "MP4 with video+audio must be classified as Video");
+    if let MediaClassification::Video { has_audio, .. } = c_sound {
+        assert!(has_audio, "MP4 must detect audio track");
+    }
+
+    let c_nosound = classify(&mp4_no_sound_path);
+    assert!(c_nosound.is_video(), "MP4 without sound must be classified as Video");
+    if let MediaClassification::Video { has_audio, .. } = c_nosound {
+        assert!(!has_audio, "MP4 must report no audio track");
+    }
+
+    let c_txt = classify(&txt_path);
+    assert!(c_txt.is_unsupported(), "Text file must be classified as Unsupported");
+
+    // Cleanup
+    let _ = std::fs::remove_file(&mp3_path);
+    let _ = std::fs::remove_file(&mp4_sound_path);
+    let _ = std::fs::remove_file(&mp4_no_sound_path);
+    let _ = std::fs::remove_file(&txt_path);
+}
