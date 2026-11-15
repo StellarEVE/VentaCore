@@ -126,16 +126,30 @@ This document captures the full context of the development sessions up to **Stag
 - Automatic fallback: Graceful CPU oracle execution if GPU adapters or drivers are unavailable.
 - Integration tests in `crates/render/tests/render_tests.rs` (10 tests).
 
+### Stage 8: Preview Speed: Monitor Resolution & Proxies
+- Intra-frame proxy generation (`generate_intra_proxy` in `crates/media/src/proxy.rs`) cached under `<fingerprint>/proxies/<tier>/` with $O(1)$ random seek.
+- Bounded in-memory frame cache (`FrameCache` in `crates/render/src/preview.rs`) with 128 MB default capacity and LRU eviction.
+- Dynamic performance governor (`PerformanceGovernor`) for viewport-aware tier selection and drop compensation.
+- Audio master clock synchronization (`MasterClock` in `crates/render/src/clock.rs`) with whole-number tick arithmetic and sync evaluation (`SyncAction::Display`, `Drop`, `Repeat`).
+- Integration tests in `crates/render/tests/preview_tests.rs` (4 tests) and `crates/media/tests/media_tests.rs`.
+
+### Stage 9: Export and Render Cache
+- Multitrack stereo audio mixer (`AudioMixer` in `crates/audio/src/mixer.rs`) with track gain, master volume, linear fade-in/fade-out envelopes, mute/solo flags, and soft-limiting.
+- Content-addressed disk render cache (`RenderCache` in `crates/render/src/render_cache.rs`) with FNV-1a keying and purge support.
+- Full-resolution timeline export (`export_timeline` in `crates/engine/src/export/mod.rs`) with frame-by-frame composite rendering.
+- Atomic export finalization (write to `.part` file, rename on completion; delete on error or cancellation).
+- Integration tests in `crates/render/tests/render_cache_tests.rs`, `crates/audio/tests/mixer_tests.rs` (3 tests), and `crates/engine/tests/export_tests.rs` (2 tests).
+
 ---
 
 ## 3. Current Test & Build Status
-- **Workspace Tests**: `cargo test --workspace` -> **75 tests passed; 0 failed**.
-- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in release profile**.
+- **Workspace Tests**: `cargo test --workspace` -> **86 tests passed; 0 failed**.
+- **Release Build**: `cargo build --release --workspace` -> **Clean compilation in 42.92s**.
 
 ---
 
-## 4. Next Task: Stage 8 (Preview Speed: Monitor Resolution & Proxies)
-The next task to build is **Stage 8: Preview Speed** inside `crates/render` / `crates/media`:
-1. Intra-frame proxy generation in cache.
-2. Auto-resolution tiering and frame cache.
-3. Audio master clock synchronization.
+## 4. Next Task: Stage 10 (Command Line - Milestone A Exit Gate)
+The next task to build is **Stage 10: Command Line** in `crates/cli`:
+1. `ventacore-cli` front end: capabilities, analyze-song, plan, export, run, purge-cache.
+2. End-to-end integration test: song + videos -> beat-synced exported MP4.
+3. Milestone A Pause: Owner review of cuts and CLI execution.

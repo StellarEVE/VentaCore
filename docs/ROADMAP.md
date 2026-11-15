@@ -112,17 +112,21 @@ Before modifying code, read these documents in order:
   - CPU reference oracle (`CpuReferenceOracle`) with analytical rendering and automatic fallback.
   - *Exit gate passed*: 10 render tests passed; hardware acceleration verified on NVIDIA GeForce MX150; max difference between GPU output and CPU oracle is 0 (satisfies Charter Rule 5 $\le 1$ color step).
 
-- [ ] **Stage 8: Preview Speed: Monitor Resolution & Proxies** (Next up)
-  - Intra-frame proxy generation in cache.
-  - Auto-resolution tiering and frame cache.
-  - Audio master clock synchronization.
+- [x] **Stage 8: Preview Speed: Monitor Resolution & Proxies** (Completed: Stage 8 & 9 checkpoint)
+  - Intra-frame proxy generation (`ProxyTier`) cached under `<fingerprint>/proxies/<tier>/` with $O(1)$ random seek.
+  - In-memory bounded LRU frame cache (`FrameCache`) with 128 MB default capacity and eviction.
+  - Dynamic performance governor (`PerformanceGovernor`) for viewport-aware tier selection and drop compensation.
+  - Audio master clock synchronization (`MasterClock`) with integer tick arithmetic and drift correction (`SyncAction::Display`, `Drop`, `Repeat`).
+  - *Exit gate passed*: 4 preview tests and proxy seek integration test passed.
 
-- [ ] **Stage 9: Export and Render Cache**
-  - Full-resolution timeline export to MP4/H.264 + stereo AAC.
-  - Atomic export finalization (write to temp file, rename on success).
-  - Content-addressed render cache.
+- [x] **Stage 9: Export and Render Cache** (Completed: Stage 8 & 9 checkpoint)
+  - Multitrack stereo audio mixer (`AudioMixer`) with gain, fade-in/fade-out envelopes, mute/solo, and soft-limiting.
+  - Content-addressed disk render cache (`RenderCache`) with FNV-1a keying and purge support.
+  - Full-resolution timeline export (`export_timeline`) with frame-by-frame composite rendering.
+  - Atomic export finalization (write to `.part` file, rename on completion; delete on error or cancellation).
+  - *Exit gate passed*: 3 mixer tests, render cache test, and atomic export integration tests passed.
 
-- [ ] **Stage 10: Command Line (Milestone A Exit Gate)**
+- [ ] **Stage 10: Command Line (Milestone A Exit Gate)** (Next up)
   - `ventacore-cli` front end: capabilities, analyze-song, plan, export, run, purge-cache.
   - End-to-end integration test: song + videos -> beat-synced exported MP4.
   - **Milestone A Pause**: Owner review of cuts and CLI execution.

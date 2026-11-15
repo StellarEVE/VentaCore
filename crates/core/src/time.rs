@@ -195,6 +195,16 @@ impl TimeRange {
     pub fn overlaps(self, other: TimeRange) -> bool {
         self.start < other.end() && other.start < self.end()
     }
+
+    pub fn intersection(self, other: TimeRange) -> Option<TimeRange> {
+        let start = self.start.max(other.start);
+        let end = self.end().min(other.end());
+        if end > start {
+            Some(TimeRange::from_start_end(start, end))
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]

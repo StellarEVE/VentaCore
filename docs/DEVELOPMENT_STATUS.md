@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-11-15  
 **Current Branch**: `main`  
-**Latest Verified Commit**: (Stage 7 checkpoint)  
+**Latest Verified Commit**: (Stage 8 & 9 checkpoint)  
 **Repository**: [https://github.com/StellarEVE/VentaCore](https://github.com/StellarEVE/VentaCore)
 
 ---
@@ -12,8 +12,8 @@
 | Check | Result | Details |
 |---|---|---|
 | **Workspace Compilation (Debug)** | **PASS** | All 8 crates compiled with zero warnings/errors. |
-| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed cleanly. |
-| **Unit & Integration Tests** | **PASS** | 75 tests passed; 0 failed; 0 ignored. |
+| **Workspace Compilation (Release)** | **PASS** | `cargo build --release --workspace` completed in 42.92s. |
+| **Unit & Integration Tests** | **PASS** | 86 tests passed; 0 failed; 0 ignored. |
 | **Layer Architecture Enforcement** | **PASS** | Strict downward dependency direction and border checks verified. |
 | **Hardware Graphics Verification** | **PASS** | Verified on reference target NVIDIA GeForce MX150 (Charter Rule 5: max diff = 0 vs CPU oracle). |
 | **Property-Based Invariant Fuzzing** | **PASS** | 100 randomized multi-command test runs verified with `proptest`. |
@@ -83,26 +83,34 @@
 - **Freeze Action (Charter Rule 8)**: `freeze_timeline_cuts` and `unfreeze_timeline_cuts` permanently protect placed timeline clips by setting `pinned = true`.
 - **Status Reporting (Charter Rule 11)**: `PipelineStatus` provides human-readable progress summaries.
 
-### Stage 7: GPU Render Core (This Checkpoint)
+### Stage 7: GPU Render Core (`220994c`)
 - **`wgpu` Graphics Compositor (`GpuCompositor`)**: Offscreen rendering engine using WGSL shaders with texture uploads, staging buffers, and row-aligned readbacks. Verified active on reference GPU: NVIDIA GeForce MX150.
 - **CPU Reference Oracle (`CpuReferenceOracle`)**: Pure software reference renderer providing exact analytical baseline for hard cuts, transitions, and transforms (Charter Rule 5).
 - **Charter Rule 5 Proven by Verification**: Hardware GPU rendering tested against CPU Reference Oracle with maximum channel difference $\le 1$ color step (measured max channel difference = 0).
-- **Fit Modes**:
-  - `Letterbox`: Aspect ratio preserving fit with solid black borders.
-  - `Crop`: Center crop symmetrically covering the destination canvas.
-  - `BlurPadding`: Outer bars padded with blurred, stretched copy of source frame.
-- **Transitions**: `CrossDissolve`, `DipToColor` (dip to black/white), `WipeLeft`, `WipeRight`, `PushLeft`, `PushRight`.
+- **Fit Modes**: `Letterbox`, `Crop`, and `BlurPadding`.
+- **Transitions**: `CrossDissolve`, `DipToColor` (black/white), `WipeLeft`, `WipeRight`, `PushLeft`, `PushRight`.
 - **2D Transforms**: Position, scale, rotation, and opacity with 4x4 transform matrices.
 - **Resolution Tiers**: `Full` (1.0x), `Half` (0.5x), `Quarter` (0.25x), `Eighth` (0.125x) with even dimension alignment for video codec safety.
-- **Automatic Fallback**: Automatic software fallback to CPU oracle when GPU adapters or drivers are unavailable.
+
+### Stage 8: Preview Speed: Monitor Resolution & Proxies (This Checkpoint)
+- **Intra-Frame Proxies (`ProxyTier`)**: Downscaled intra-frame proxy generation (`generate_intra_proxy`) cached in `MediaCache` under `<fingerprint>/proxies/<tier>/`. Enables $O(1)$ instant random seeking without sequential GOP decoding delays.
+- **In-Memory Frame Cache (`FrameCache`)**: Bounded LRU in-memory cache indexed by `(source_id, time, tier)` with configurable byte budget (default 128 MB) and automatic eviction.
+- **Dynamic Performance Governor (`PerformanceGovernor`)**: Automatically selects resolution tiers based on viewport dimensions and monitors frame render latency, stepping down resolution during frame drops to guarantee smooth real-time playback.
+- **Audio Master Clock (`MasterClock`)**: Audio output sample counter drives the master timebase (Charter Rule 2 whole-number tick arithmetic). Video sync policy (`SyncAction::Display`, `Drop`, `Repeat`) keeps video strictly synchronized within $\pm \frac{1}{2}$ frame interval.
+
+### Stage 9: Export and Render Cache (This Checkpoint)
+- **Multitrack Audio Mixer (`AudioMixer`)**: Mixes song audio and video clip audio with individual track gain, master volume, linear fade-in and fade-out envelopes, mute/solo flags, and soft-limiting to eliminate digital clipping.
+- **Content-Addressed Render Cache (`RenderCache`)**: Disk cache for composite frames keyed by deterministic FNV-1a hashes of source fingerprint, timestamps, fit mode, transform, and resolution tier. Supports full cache purge.
+- **Full-Resolution Timeline Export (`export_timeline`)**: Renders timeline frame-by-frame with active clip selection, transition blending, and video encoding.
+- **Atomic Export Finalization (Charter Rule 9 & 11)**: Writes export stream to `<output_path>.part`; atomically renames to final destination on 100% completion; automatically removes partial file on cancellation or error.
 
 ---
 
 ## Active Milestone & Next Target
 
 - **Current Milestone**: Milestone A: First Cut (CLI)
-- **Next Stage**: **Stage 8: Preview Speed: Monitor Resolution & Proxies**
-- **Goal for Stage 8**: Intra-frame proxy generation in cache, auto-resolution tiering, frame caching, and audio master clock synchronization.
+- **Next Stage**: **Stage 10: Command Line (Milestone A Exit Gate)**
+- **Goal for Stage 10**: CLI frontend (`ventacore-cli`), subcommands (`capabilities`, `analyze-song`, `plan`, `export`, `run`, `purge-cache`), and end-to-end beat-synced test.
 
 ---
 

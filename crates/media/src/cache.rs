@@ -5,11 +5,13 @@
 
 use crate::analysis::FootageAnalysis;
 use crate::error::MediaError;
+use crate::proxy::{generate_intra_proxy, load_proxy_frame, ProxyFrame, ProxyIndex, ProxyTier};
 use crate::thumbnail::ThumbnailFrame;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use ventacore_core::Tick;
+use ventacore_platform::traits::VideoDecoder;
 
 /// Content-addressed disposable disk cache manager.
 #[derive(Debug, Clone)]
@@ -134,6 +136,36 @@ impl MediaCache {
 
         thumbnails.sort_by_key(|t| t.time);
         thumbnails
+    }
+
+    /// Checks if an intra-frame proxy has been generated for this fingerprint and tier.
+    pub fn has_proxy(&self, fingerprint: &str, tier: ProxyTier) -> bool {
+        let index_path = self
+            .fingerprint_dir(fingerprint)
+            .join("proxies")
+            .join(tier.folder_name())
+            .join("index.json");
+        index_path.exists()
+    }
+
+    /// Loads a cached intra-frame proxy at the exact timestamp.
+    pub fn load_proxy_frame(
+        &self,
+        fingerprint: &str,
+        tier: ProxyTier,
+        time: Tick,
+    ) -> Option<ProxyFrame> {
+        load_proxy_frame(&self.root_dir, fingerprint, tier, time)
+    }
+
+    /// Generates an intra-frame proxy on disk from a VideoDecoder.
+    pub fn generate_proxy(
+        &self,
+        decoder: &mut dyn VideoDecoder,
+        fingerprint: &str,
+        tier: ProxyTier,
+    ) -> Result<ProxyIndex, MediaError> {
+        generate_intra_proxy(decoder, &self.root_dir, fingerprint, tier)
     }
 
     /// Purges all derived data in the cache directory, returning the number of bytes deleted.

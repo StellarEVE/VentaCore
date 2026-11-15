@@ -197,3 +197,45 @@ impl VideoDecoder for SceneCutAndBlackTestDecoder {
         false
     }
 }
+
+#[test]
+fn test_intra_frame_proxy_generation_and_fast_seeking() {
+    let temp_dir = std::env::temp_dir().join("ventacore_test_proxy_cache");
+    let cache = MediaCache::new(&temp_dir).unwrap();
+    let fp = "fp_proxy_test_video";
+
+    let mut decoder = SyntheticVideoDecoder::new(
+        Tick::from_seconds(2),
+        320,
+        180,
+        30,
+        1,
+        Rotation::None,
+        ColorDepth::Bits8,
+    );
+
+    // Initial check: proxy not yet present
+    assert!(!cache.has_proxy(fp, ProxyTier::Half));
+
+    // Generate Half tier proxy (160x90)
+    let index = cache.generate_proxy(&mut decoder, fp, ProxyTier::Half).expect("Must generate proxy");
+    assert_eq!(index.width, 160);
+    assert_eq!(index.height, 90);
+    assert_eq!(index.frame_count, 60);
+
+    // Now has_proxy should return true
+    assert!(cache.has_proxy(fp, ProxyTier::Half));
+
+    // O(1) random access: load frame at t = 1.0s (frame 30)
+    let target_time = Tick::from_frames(30, 30, 1);
+    let frame = cache
+        .load_proxy_frame(fp, ProxyTier::Half, target_time)
+        .expect("Must load proxy frame directly");
+
+    assert_eq!(frame.time, target_time);
+    assert_eq!(frame.width, 160);
+    assert_eq!(frame.height, 90);
+    assert_eq!(frame.rgba_data.len(), 160 * 90 * 4);
+
+    let _ = fs::remove_dir_all(temp_dir);
+}

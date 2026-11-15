@@ -12,6 +12,7 @@ pub mod decoder;
 pub mod error;
 pub mod grid;
 pub mod loudness;
+pub mod mixer;
 pub mod spectral;
 pub mod tempo;
 
@@ -22,5 +23,6 @@ pub use decoder::{AudioDecoder, DecodedAudio, SymphoniaDecoder};
 pub use error::AudioError;
 pub use grid::build_beat_grid;
 pub use loudness::{compute_loudness_envelope, detect_loudness_change_points, LoudnessChangePoint};
+pub use mixer::{AudioMixTrack, AudioMixer};
 pub use spectral::{compute_spectral_flux_onsets, OnsetPeak};
 pub use tempo::estimate_tempo_autocorrelation;

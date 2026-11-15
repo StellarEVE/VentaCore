@@ -3,9 +3,11 @@
 //! Conductor for background analysis pipelines, live cut planning,
 //! and job orchestration.
 
+pub mod export;
 pub mod pipeline;
 pub mod planner;
 
+pub use export::{export_timeline, ExportConfig, ExportError, ExportProgress, ExportSummary};
 pub use pipeline::{
     freeze_timeline_cuts, run_conductor_pipeline, spawn_conductor, unfreeze_timeline_cuts,
     CancellationToken, ConductorConfig, ConductorHandle, ConductorUpdate, PipelineStage,
