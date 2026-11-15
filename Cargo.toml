@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/audio",
+    "crates/platform",
+    "crates/media",
+    "crates/render",
+    "crates/engine",
+    "crates/app",
+    "crates/cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+authors = ["VentaCore Contributors"]
+repository = "https://github.com/StellarEVE/VentaCore"
+
+[workspace.dependencies]
+ventacore-core = { path = "crates/core" }
+ventacore-audio = { path = "crates/audio" }
+ventacore-platform = { path = "crates/platform" }
+ventacore-media = { path = "crates/media" }
+ventacore-render = { path = "crates/render" }
+ventacore-engine = { path = "crates/engine" }

@@ -1,0 +1,29 @@
+name: Windows Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_release:
+        description: 'Package release binaries'
+        required: false
+        default: 'true'
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Windows Release Build & Package
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binaries
+        run: cargo build --release --workspace
+
+      - name: Run workspace tests
+        run: cargo test --release --workspace

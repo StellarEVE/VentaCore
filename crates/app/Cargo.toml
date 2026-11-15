@@ -1,0 +1,15 @@
+[package]
+name = "ventacore-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+ventacore-core = { workspace = true }
+ventacore-audio = { workspace = true }
+ventacore-platform = { workspace = true }
+ventacore-media = { workspace = true }
+ventacore-render = { workspace = true }
+ventacore-engine = { workspace = true }

@@ -1,0 +1,11 @@
+[package]
+name = "ventacore-media"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+ventacore-core = { workspace = true }
+ventacore-platform = { workspace = true }
