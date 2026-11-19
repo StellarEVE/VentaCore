@@ -8,95 +8,245 @@
 </head>
 <body>
   <div id="app">
+    <!-- Studio Header (Linear Dark Pro Frosty Glass + Cyber Studio Beat Console) -->
     <header class="studio-header">
-      <div class="logo">
-        <span class="logo-badge">VC</span>
-        <span class="logo-text">VentaCore <strong>Studio</strong></span>
-        <span class="engine-badge">Tauri 2.0 Engine</span>
+      <div class="header-left">
+        <div class="logo">
+          <div class="logo-badge">VC</div>
+          <div class="logo-titles">
+            <span class="logo-text">VentaCore <strong>Studio</strong></span>
+            <span class="engine-badge">Tauri 2.0 Native</span>
+          </div>
+        </div>
+        <div class="project-pill">
+          <span class="project-icon">📂</span>
+          <span class="project-title" id="project-title" contenteditable="true">Cyber_Odyssey_2026.vcproj</span>
+          <span class="save-status" id="save-status">Saved</span>
+        </div>
       </div>
-      <div class="project-info">
-        <span class="project-title" id="project-title">Untitled Music Video</span>
-        <span class="bpm-tag" id="bpm-display">128.0 BPM</span>
+
+      <!-- Cyber-Studio Beat & Rhythm Console -->
+      <div class="beat-console">
+        <div class="beat-detector-unit">
+          <div class="beat-lamp-wrapper" title="Downbeat Pulse Indicator">
+            <div class="beat-lamp" id="beat-lamp"></div>
+            <div class="beat-dots">
+              <span class="beat-dot active" data-beat="1">1</span>
+              <span class="beat-dot" data-beat="2">2</span>
+              <span class="beat-dot" data-beat="3">3</span>
+              <span class="beat-dot" data-beat="4">4</span>
+            </div>
+          </div>
+          <div class="bpm-unit">
+            <span class="bpm-val" id="bpm-display">128.0</span>
+            <span class="bpm-lbl">BPM</span>
+          </div>
+        </div>
+
+        <div class="bar-counter">
+          <span class="bar-label">BAR / BEAT</span>
+          <span class="bar-digits" id="musical-time">012 : 03 : 02</span>
+        </div>
+
+        <!-- Stereo Peak VU Meter -->
+        <div class="vu-meter-cluster" title="Master Audio Peak Meter">
+          <div class="vu-channel">
+            <span class="vu-label">L</span>
+            <div class="vu-track">
+              <div class="vu-bar" id="vu-meter-l" style="height: 68%;"></div>
+              <div class="vu-clip-led" id="vu-clip-l"></div>
+            </div>
+          </div>
+          <div class="vu-channel">
+            <span class="vu-label">R</span>
+            <div class="vu-track">
+              <div class="vu-bar" id="vu-meter-r" style="height: 64%;"></div>
+              <div class="vu-clip-led" id="vu-clip-r"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini Audio Spectrum Visualizer -->
+        <div class="spectrum-visualizer" id="spectrum-bars">
+          <span class="spectrum-bar" style="--h: 45%;"></span>
+          <span class="spectrum-bar" style="--h: 75%;"></span>
+          <span class="spectrum-bar" style="--h: 90%;"></span>
+          <span class="spectrum-bar" style="--h: 60%;"></span>
+          <span class="spectrum-bar" style="--h: 80%;"></span>
+          <span class="spectrum-bar" style="--h: 50%;"></span>
+          <span class="spectrum-bar" style="--h: 70%;"></span>
+          <span class="spectrum-bar" style="--h: 30%;"></span>
+        </div>
       </div>
-      <div class="header-actions">
-        <button class="btn btn-secondary" id="btn-theme-toggle">Theme</button>
-        <button class="btn btn-primary" id="btn-export">Export Video</button>
+
+      <div class="header-right">
+        <div class="hardware-pill" title="Hardware Pipeline Status">
+          <span class="hw-dot"></span>
+          <span class="hw-text">D3D11 • NVENC</span>
+        </div>
+        <div class="timecode-master" id="header-timecode">00:01:24:18</div>
+        <button class="btn btn-sm btn-ghost" id="btn-toggle-snap" title="Toggle Beat Magnet Snapping">🧲 Snap On</button>
+        <button class="btn btn-sm btn-accent" id="btn-quick-export">🚀 Export</button>
       </div>
     </header>
 
+    <!-- Master Workspace Pages -->
     <main class="studio-workspace">
-      <!-- Media Page -->
+
+      <!-- ================= PAGE 1: MEDIA ================= -->
       <section id="page-media" class="page-view active">
-        <div class="split-view">
-          <div class="panel-left">
-            <!-- Music Panel -->
-            <div class="card glass-card">
+        <div class="media-layout">
+          <!-- Left: Asset Management Hub (Song + Footage Pool) -->
+          <div class="media-left-deck">
+            <!-- Master Song Section -->
+            <div class="card glass-card song-section">
               <div class="card-header">
-                <h3>🎵 Song Track</h3>
-                <button class="btn btn-sm btn-accent" id="btn-browse-music">Browse Song</button>
-              </div>
-              <div class="drop-zone" id="drop-zone-music">
-                <div class="drop-icon">🎧</div>
-                <div class="drop-title">Drop your master song audio here</div>
-                <div class="drop-subtitle">Supports MP3, WAV, FLAC with automatic beat detection</div>
-              </div>
-              <div id="song-card" class="song-card hidden">
-                <div class="song-meta">
-                  <span class="song-name" id="song-name">-</span>
-                  <span class="song-duration" id="song-duration">0:00</span>
+                <div class="header-title-group">
+                  <span class="card-icon">🎵</span>
+                  <div class="card-title-text">
+                    <h3>Master Song Track</h3>
+                    <span class="sub-text">Reference Audio Clock</span>
+                  </div>
                 </div>
-                <div class="waveform-container" id="song-waveform">
-                  <div class="playhead" id="song-playhead"></div>
+                <button class="btn btn-xs btn-accent" id="btn-browse-music">Browse Audio</button>
+              </div>
+
+              <div class="song-info-card" id="song-card">
+                <div class="song-meta-row">
+                  <div class="song-primary">
+                    <span class="song-title-text" id="song-name">Hyperdrive_Synthwave_128BPM.wav</span>
+                    <span class="song-specs">48.0 kHz • 24-bit PCM • Stereo</span>
+                  </div>
+                  <div class="song-stats">
+                    <span class="stat-badge" id="song-duration">03:45.00</span>
+                    <span class="stat-badge accent-badge">184 Beats Detected</span>
+                  </div>
+                </div>
+
+                <div class="waveform-container" id="song-waveform" title="Click to seek song audio">
+                  <canvas id="waveform-canvas" width="600" height="48"></canvas>
+                  <div class="playhead" id="song-playhead" style="left: 37%;"></div>
+                  <div class="beat-grid-overlay">
+                    <!-- Dynamic beat tick marks -->
+                    <span class="beat-tick downbeat" style="left: 12.5%;"></span>
+                    <span class="beat-tick" style="left: 25.0%;"></span>
+                    <span class="beat-tick" style="left: 37.5%;"></span>
+                    <span class="beat-tick downbeat" style="left: 50.0%;"></span>
+                    <span class="beat-tick" style="left: 62.5%;"></span>
+                    <span class="beat-tick" style="left: 75.0%;"></span>
+                    <span class="beat-tick downbeat" style="left: 87.5%;"></span>
+                  </div>
+                </div>
+
+                <div class="song-actions-row">
+                  <button class="btn btn-xs btn-secondary" id="btn-play-song">▶ Play Audio</button>
+                  <button class="btn btn-xs btn-ghost" id="btn-reanalyze-beats">⚡ Re-analyze Beats</button>
+                  <span class="transient-info">Transient Threshold: <strong>0.72</strong></span>
                 </div>
               </div>
             </div>
 
-            <!-- Footage Panel -->
-            <div class="card glass-card footage-card">
+            <!-- Footage Pool (Media Bin) -->
+            <div class="card glass-card footage-section">
               <div class="card-header">
-                <h3>🎬 Footage Pool</h3>
-                <button class="btn btn-sm btn-accent" id="btn-add-videos">Add Videos</button>
+                <div class="header-title-group">
+                  <span class="card-icon">🎞️</span>
+                  <div class="card-title-text">
+                    <h3>Footage Pool</h3>
+                    <span class="sub-text" id="pool-count">6 Clips Loaded</span>
+                  </div>
+                </div>
+                <button class="btn btn-xs btn-accent" id="btn-add-videos">+ Import Footage</button>
               </div>
-              <div class="drop-zone" id="drop-zone-footage">
-                <div class="drop-icon">🎞️</div>
-                <div class="drop-title">Drop video footage files here</div>
-                <div class="drop-subtitle">Supports MP4, MOV, MKV, WebM</div>
+
+              <!-- Filter & Search Bar -->
+              <div class="bin-controls">
+                <input type="text" class="input-search" id="input-search-clips" placeholder="Search clips by name or tag...">
+                <div class="filter-chips">
+                  <button class="chip active" data-filter="all">All</button>
+                  <button class="chip" data-filter="4k">4K UHD</button>
+                  <button class="chip" data-filter="60fps">60 FPS</button>
+                  <button class="chip" data-filter="motion">High Motion</button>
+                </div>
               </div>
+
+              <!-- Clip Grid / List -->
               <div class="footage-pool-list" id="footage-list">
-                <!-- Rendered dynamically -->
+                <!-- Populated dynamically by app.js -->
               </div>
             </div>
           </div>
 
-          <div class="panel-right">
-            <!-- Source Monitor -->
-            <div class="card glass-card monitor-card">
+          <!-- Right: Industrial Source Monitor Deck -->
+          <div class="media-right-deck">
+            <div class="card glass-card source-monitor-card">
               <div class="monitor-header">
-                <div class="monitor-badge">SOURCE MONITOR</div>
-                <div class="monitor-title" id="source-title">No clip selected</div>
-                <div class="monitor-res" id="source-res">0x0</div>
-              </div>
-              <div class="viewport" id="source-viewport">
-                <video id="source-video-element" class="hidden"></video>
-                <div class="viewport-placeholder" id="source-placeholder">
-                  <span class="placeholder-icon">📽️</span>
-                  <span>Select a video from the pool to audition</span>
+                <div class="monitor-id-group">
+                  <span class="monitor-tag">SOURCE MONITOR</span>
+                  <span class="monitor-filename" id="source-title">Concert_Pyrotechnics_Close.mp4</span>
+                </div>
+                <div class="monitor-meta-group">
+                  <span class="badge-slate" id="source-res">3840x2160 UHD</span>
+                  <span class="badge-slate" id="source-fps">59.94 fps</span>
+                  <span class="badge-slate">H.264 High</span>
                 </div>
               </div>
-              <div class="transport-controls">
-                <div class="scrub-container">
-                  <input type="range" min="0" max="100" value="0" class="scrub-bar" id="source-scrub">
+
+              <!-- Viewport with Safe Margins & Scanlines -->
+              <div class="viewport-wrapper">
+                <div class="viewport" id="source-viewport">
+                  <div class="safe-area-overlay" id="safe-margins">
+                    <div class="safe-action"></div>
+                    <div class="safe-title"></div>
+                  </div>
+                  <div class="viewport-placeholder" id="source-placeholder">
+                    <div class="glitch-screen">
+                      <span class="monitor-screen-icon">📽️</span>
+                      <span class="monitor-screen-title" id="preview-active-title">Concert_Pyrotechnics_Close.mp4</span>
+                      <span class="monitor-screen-sub">D3D11 Hardware Video Stream Active • Zero-Copy Pipe</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="transport-row">
-                  <div class="transport-buttons">
-                    <button class="btn-icon" id="btn-step-back" title="Previous Frame (Left Arrow / J)">⏮</button>
-                    <button class="btn-icon btn-play" id="btn-play-pause" title="Play / Pause (Space)">▶</button>
-                    <button class="btn-icon" id="btn-step-fwd" title="Next Frame (Right Arrow / L)">⏭</button>
-                  </div>
-                  <div class="timecode-display" id="source-timecode">00:00:00:00</div>
-                  <div class="transport-options">
-                    <span class="res-tag">Full Res</span>
-                  </div>
+
+                <!-- Vertical Audio VU Bar beside monitor -->
+                <div class="vertical-vu-strip">
+                  <div class="vu-vert-bar" style="height: 60%;"></div>
+                  <span class="vu-db-text">-12dB</span>
+                </div>
+              </div>
+
+              <!-- Scrub & In/Out Range Bar -->
+              <div class="scrub-station">
+                <div class="scrub-track-container">
+                  <div class="in-out-highlight" id="in-out-range" style="left: 15%; width: 55%;"></div>
+                  <input type="range" min="0" max="1000" value="280" class="scrub-slider" id="source-scrub">
+                  <div class="marker in-marker" style="left: 15%;"><span>I</span></div>
+                  <div class="marker out-marker" style="left: 70%;"><span>O</span></div>
+                </div>
+              </div>
+
+              <!-- Industrial Transport Control Bar -->
+              <div class="transport-dock">
+                <div class="transport-group in-out-buttons">
+                  <button class="btn-tool" id="btn-mark-in" title="Mark In Point [I]">Mark [I]</button>
+                  <button class="btn-tool" id="btn-mark-out" title="Mark Out Point [O]">Mark [O]</button>
+                  <button class="btn-tool" id="btn-clear-inout" title="Clear In/Out Range">Clear</button>
+                </div>
+
+                <div class="transport-group playback-buttons">
+                  <button class="btn-icon" id="btn-prev-marker" title="Go to In Point">⏮</button>
+                  <button class="btn-icon" id="btn-step-back" title="Previous Frame (Left Arrow / J)">◀</button>
+                  <button class="btn-icon btn-play-main" id="btn-play-pause" title="Play/Pause (Space)">▶</button>
+                  <button class="btn-icon" id="btn-step-fwd" title="Next Frame (Right Arrow / L)">▶</button>
+                  <button class="btn-icon" id="btn-next-marker" title="Go to Out Point">⏭</button>
+                  <button class="btn-icon" id="btn-loop-toggle" title="Loop Audition">🔁</button>
+                </div>
+
+                <div class="timecode-readout" id="source-timecode">00:00:11:42</div>
+
+                <div class="transport-group insert-buttons">
+                  <button class="btn-tool btn-insert" id="btn-insert-timeline" title="Insert Range to Beat Timeline [,]">⬇ Insert</button>
+                  <button class="btn-tool btn-overwrite" id="btn-overwrite-timeline" title="Overwrite to Timeline [.]">⚡ Overwrite</button>
                 </div>
               </div>
             </div>
@@ -104,145 +254,533 @@
         </div>
       </section>
 
-      <!-- Cut Page -->
+
+      <!-- ================= PAGE 2: CUT ================= -->
       <section id="page-cut" class="page-view">
         <div class="cut-layout">
-          <div class="cut-top">
-            <div class="card glass-card program-monitor">
+          <!-- Top Deck: Program Monitor + Pacing Engine -->
+          <div class="cut-top-deck">
+            <!-- Cut Program Monitor -->
+            <div class="card glass-card cut-program-card">
               <div class="monitor-header">
-                <div class="monitor-badge program-badge">PROGRAM MONITOR</div>
-                <div class="monitor-title">Live Montage Cut</div>
-                <div class="monitor-res">1920x1080 (30 fps)</div>
+                <div class="monitor-id-group">
+                  <span class="monitor-tag program-tag">PROGRAM MONITOR</span>
+                  <span class="monitor-filename">Sequence 01 : Beat Cut Master</span>
+                </div>
+                <div class="monitor-meta-group">
+                  <span class="badge-slate">1920x1080 FHD</span>
+                  <span class="badge-slate">Beat-Locked</span>
+                </div>
               </div>
-              <div class="viewport">
-                <div class="viewport-placeholder">
-                  <span>Press "Begin Analysis" to generate the beat cut</span>
+              <div class="viewport-wrapper">
+                <div class="viewport">
+                  <div class="viewport-placeholder">
+                    <span class="monitor-screen-icon">✂️</span>
+                    <span class="monitor-screen-title">Beat Cut Live Preview</span>
+                    <span class="monitor-screen-sub">Synchronized to Hyperdrive_Synthwave_128BPM.wav</span>
+                  </div>
+                </div>
+              </div>
+              <div class="cut-transport-bar">
+                <button class="btn-icon" id="btn-cut-play">▶</button>
+                <div class="timecode-readout" id="cut-timecode">00:01:24:18</div>
+                <span class="cut-status-text">Cut Phrase: <strong>Chorus 1 (Drop)</strong></span>
+              </div>
+            </div>
+
+            <!-- Montage Pacing Control Station -->
+            <div class="card glass-card cut-pacing-card">
+              <div class="card-header">
+                <div class="header-title-group">
+                  <span class="card-icon">⚡</span>
+                  <div class="card-title-text">
+                    <h3>Montage Pacing Engine</h3>
+                    <span class="sub-text">AI Energy & Transient Adaptation</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pacing-controls-form">
+                <div class="control-row">
+                  <label class="control-label">Rhythm Cut Pacing</label>
+                  <select class="select-input" id="select-pacing-mode">
+                    <option value="balanced">Beat-Adaptive (Balanced 1-Bar Cuts)</option>
+                    <option value="high-energy">High Energy (Fast 1/2-Bar Cuts on Transients)</option>
+                    <option value="cinematic">Cinematic Phrases (2-Bar / 4-Bar Sustained)</option>
+                    <option value="drop-burst">Drop Burst (Strobe 1/4-Bar Slices on Peak)</option>
+                  </select>
+                </div>
+
+                <div class="control-row">
+                  <div class="slider-label-row">
+                    <label class="control-label">Transient Sensitivity</label>
+                    <span class="slider-val" id="val-sensitivity">78%</span>
+                  </div>
+                  <input type="range" min="10" max="100" value="78" class="control-slider" id="slider-sensitivity">
+                </div>
+
+                <div class="control-row">
+                  <div class="slider-label-row">
+                    <label class="control-label">Visual Motion Energy Bias</label>
+                    <span class="slider-val" id="val-motion-bias">High</span>
+                  </div>
+                  <input type="range" min="0" max="100" value="85" class="control-slider" id="slider-motion-bias">
+                </div>
+
+                <div class="toggle-row">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="chk-auto-broll" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <span class="toggle-label">Auto-Insert B-Roll Overlays on Downbeats</span>
+                </div>
+
+                <button class="btn btn-primary btn-block btn-glow" id="btn-generate-montage">
+                  ⚡ Generate Beat-Sync Cut
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Deck: Industrial Dual-Timeline (Overview Energy Strip + Zoomed Beat Strip) -->
+          <div class="cut-bottom-deck card glass-card">
+            <div class="dual-timeline-header">
+              <span class="section-label">DUAL-TIMELINE PACING STRIP</span>
+              <div class="timeline-quick-stats">
+                <span>Song Duration: <strong>03:45</strong></span>
+                <span>Total Cuts: <strong>42</strong></span>
+                <span>Avg Clip Length: <strong>1.87s</strong></span>
+              </div>
+            </div>
+
+            <!-- Upper Track: Macro Overview Energy Strip -->
+            <div class="macro-strip-wrapper">
+              <div class="macro-strip-label">Song Energy Map</div>
+              <div class="macro-energy-strip" id="macro-energy-strip">
+                <div class="energy-segment segment-intro" style="width: 12%;"><span>Intro</span></div>
+                <div class="energy-segment segment-verse" style="width: 22%;"><span>Verse 1</span></div>
+                <div class="energy-segment segment-build" style="width: 14%;"><span>Build-up</span></div>
+                <div class="energy-segment segment-drop" style="width: 20%;"><span>🔥 DROP 1</span></div>
+                <div class="energy-segment segment-verse" style="width: 18%;"><span>Verse 2</span></div>
+                <div class="energy-segment segment-outro" style="width: 14%;"><span>Outro</span></div>
+
+                <!-- Visible Viewport Frame in Macro Strip -->
+                <div class="macro-viewport-window" style="left: 35%; width: 28%;"></div>
+              </div>
+            </div>
+
+            <!-- Lower Track: Zoomed Beat-Aligned Clip Strip -->
+            <div class="micro-strip-wrapper">
+              <div class="micro-strip-label">Beat Slices</div>
+              <div class="micro-beat-strip" id="micro-cut-strip">
+                <div class="beat-slice-item slice-accent" style="flex: 2;">
+                  <span class="slice-name">Drone_Neon (1.87s)</span>
+                  <span class="slice-beat-mark">BEAT 01</span>
+                </div>
+                <div class="beat-slice-item" style="flex: 1;">
+                  <span class="slice-name">Strobe (0.93s)</span>
+                  <span class="slice-beat-mark">BEAT 02</span>
+                </div>
+                <div class="beat-slice-item slice-highlight" style="flex: 2;">
+                  <span class="slice-name">Pyro_Close (1.87s)</span>
+                  <span class="slice-beat-mark">BEAT 03</span>
+                </div>
+                <div class="beat-slice-item" style="flex: 1;">
+                  <span class="slice-name">Guitar (0.93s)</span>
+                  <span class="slice-beat-mark">BEAT 04</span>
+                </div>
+                <div class="beat-slice-item slice-accent" style="flex: 2;">
+                  <span class="slice-name">Moshpit (1.87s)</span>
+                  <span class="slice-beat-mark">BEAT 05</span>
+                </div>
+                <div class="beat-slice-item" style="flex: 1;">
+                  <span class="slice-name">Drummer (0.93s)</span>
+                  <span class="slice-beat-mark">BEAT 06</span>
                 </div>
               </div>
             </div>
-            <div class="card glass-card cut-settings">
-              <div class="card-header">
-                <h3>Montage Engine Settings</h3>
-              </div>
-              <div class="settings-form">
-                <label>Energy Cut Pacing
-                  <select class="select-input">
-                    <option>Beat-Adaptive (Balanced)</option>
-                    <option>High Energy (Fast cuts on 1/2 bars)</option>
-                    <option>Cinematic (Longer phrases on change points)</option>
-                  </select>
-                </label>
-                <button class="btn btn-primary" id="btn-start-analysis">⚡ Begin Cut Analysis</button>
-              </div>
-            </div>
-          </div>
-          <div class="cut-bottom">
-            <div class="card glass-card timeline-card">
-              <div class="timeline-header">
-                <span>Timeline Ruler</span>
-              </div>
-              <div class="timeline-tracks" id="cut-timeline-tracks">
-                <div class="track song-track">🎵 Master Song (Fixed Clock)</div>
-                <div class="track video-track">🎬 Video Cuts (Beat-Synced)</div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
-      <!-- Edit Page -->
+
+      <!-- ================= PAGE 3: EDIT ================= -->
       <section id="page-edit" class="page-view">
         <div class="edit-layout">
-          <div class="edit-monitors">
-            <div class="card glass-card half-monitor">
-              <div class="monitor-header"><span class="monitor-badge">SOURCE</span></div>
-              <div class="viewport small-viewport"><div class="viewport-placeholder">Source Clip</div></div>
+          <!-- Top Deck: Dual Monitors (Source + Program) + Inspector Panel -->
+          <div class="edit-top-deck">
+            <!-- Left: Source Monitor -->
+            <div class="card glass-card edit-monitor-card">
+              <div class="monitor-header">
+                <span class="monitor-tag">SOURCE</span>
+                <span class="monitor-filename">Drone_Neon_Cybercity.mp4</span>
+              </div>
+              <div class="viewport small-viewport">
+                <div class="viewport-placeholder">
+                  <span class="small-icon">📽️</span>
+                  <span>Source In/Out Range</span>
+                </div>
+              </div>
             </div>
-            <div class="card glass-card half-monitor">
-              <div class="monitor-header"><span class="monitor-badge program-badge">PROGRAM</span></div>
-              <div class="viewport small-viewport"><div class="viewport-placeholder">Master Sequence</div></div>
+
+            <!-- Center: Program Monitor -->
+            <div class="card glass-card edit-monitor-card">
+              <div class="monitor-header">
+                <span class="monitor-tag program-tag">PROGRAM</span>
+                <span class="monitor-filename">Timeline Master (Active)</span>
+              </div>
+              <div class="viewport small-viewport">
+                <div class="viewport-placeholder">
+                  <span class="small-icon">🎬</span>
+                  <span>Master Cut at 00:01:24:18</span>
+                </div>
+              </div>
             </div>
-            <div class="card glass-card inspector-panel">
-              <div class="card-header"><h3>Inspector</h3></div>
-              <div class="inspector-content">Select an item on the timeline</div>
+
+            <!-- Right: Industrial Clip Inspector -->
+            <div class="card glass-card edit-inspector-card">
+              <div class="card-header">
+                <div class="header-title-group">
+                  <span class="card-icon">🎛️</span>
+                  <div class="card-title-text">
+                    <h3>Clip Inspector</h3>
+                    <span class="sub-text" id="inspector-clip-name">Clip: Pyro_Close.mp4</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="inspector-fields">
+                <div class="field-section-title">TRANSFORM & SCALE</div>
+                <div class="inspector-row">
+                  <span class="prop-label">Scale</span>
+                  <input type="text" class="input-tiny" value="100.0%">
+                  <span class="prop-label">Rotation</span>
+                  <input type="text" class="input-tiny" value="0.0°">
+                </div>
+
+                <div class="field-section-title">BEAT SPEED RAMPING</div>
+                <div class="speed-buttons">
+                  <button class="btn-chip active">1.0x Normal</button>
+                  <button class="btn-chip">0.5x Half</button>
+                  <button class="btn-chip">2.0x Double</button>
+                  <button class="btn-chip btn-accent-chip">⚡ Beat Ramp</button>
+                </div>
+
+                <div class="field-section-title">COLOR GRADE PRESET</div>
+                <select class="select-input select-xs">
+                  <option>Cyber Neon (Cyan & Orange Teal)</option>
+                  <option>Industrial Bleach Bypass</option>
+                  <option>Midnight Violet Shadow</option>
+                  <option>Linear Clean Flat</option>
+                </select>
+              </div>
             </div>
           </div>
-          <div class="edit-timeline-area card glass-card">
-            <div class="multitrack-header">Multitrack NLE Timeline</div>
-            <div class="timeline-tracks">
-              <div class="track song-track">🎵 Song Track (Locked)</div>
-              <div class="track video-track">V1 Main Cut</div>
-              <div class="track video-track">V2 B-Roll / Overlays</div>
-              <div class="track audio-track">A1 Footage Audio</div>
+
+          <!-- Bottom Deck: Pro Multi-Track NLE Timeline -->
+          <div class="edit-timeline-card card glass-card">
+            <!-- Timeline Toolbar -->
+            <div class="timeline-toolbar">
+              <div class="tool-group">
+                <button class="btn-tool active" id="tool-select" title="Selection Arrow [V]">↖ [V]</button>
+                <button class="btn-tool" id="tool-razor" title="Blade / Razor Tool [C]">✂ [C]</button>
+                <button class="btn-tool" id="tool-slip" title="Slip Edit [Y]">↔ [Y]</button>
+                <button class="btn-tool" id="tool-snapping" title="Magnet Snapping [S]">🧲 [S]</button>
+              </div>
+
+              <div class="timecode-ruler-center">
+                <span class="ruler-timecode" id="timeline-current-tc">00:01:24:18</span>
+              </div>
+
+              <div class="zoom-group">
+                <span class="zoom-label">Zoom</span>
+                <input type="range" min="50" max="200" value="100" class="zoom-slider" id="timeline-zoom">
+              </div>
+            </div>
+
+            <!-- Multitrack Lanes -->
+            <div class="multitrack-container" id="multitrack-view">
+              <!-- Timecode Scale Ruler -->
+              <div class="ruler-track">
+                <div class="ruler-head">TC</div>
+                <div class="ruler-scale">
+                  <span class="ruler-mark" style="left: 0%;">00:00</span>
+                  <span class="ruler-mark" style="left: 20%;">00:30</span>
+                  <span class="ruler-mark" style="left: 40%;">01:00</span>
+                  <span class="ruler-mark" style="left: 60%;">01:30</span>
+                  <span class="ruler-mark" style="left: 80%;">02:00</span>
+                  <span class="ruler-mark" style="left: 100%;">02:30</span>
+                </div>
+              </div>
+
+              <!-- Track V2: B-Roll / Overlays -->
+              <div class="timeline-lane-row">
+                <div class="lane-header">
+                  <span class="lane-name">V2 Overlays</span>
+                  <div class="lane-controls">
+                    <button class="lane-btn" title="Lock Track">🔒</button>
+                    <button class="lane-btn active" title="Toggle Visibility">👁</button>
+                    <button class="lane-btn" title="Solo">S</button>
+                  </div>
+                </div>
+                <div class="lane-body track-v2">
+                  <div class="timeline-clip clip-v2" style="left: 15%; width: 18%;">
+                    <span class="clip-label">Pyro_Overlay.mp4 [Blend: Screen]</span>
+                  </div>
+                  <div class="timeline-clip clip-v2" style="left: 65%; width: 14%;">
+                    <span class="clip-label">Laser_Rays.mp4 [Blend: Add]</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Track V1: Primary Beat Cut -->
+              <div class="timeline-lane-row">
+                <div class="lane-header">
+                  <span class="lane-name">V1 Beat Cut</span>
+                  <div class="lane-controls">
+                    <button class="lane-btn" title="Lock Track">🔒</button>
+                    <button class="lane-btn active" title="Toggle Visibility">👁</button>
+                    <button class="lane-btn" title="Solo">S</button>
+                  </div>
+                </div>
+                <div class="lane-body track-v1">
+                  <div class="timeline-clip clip-v1" style="left: 0%; width: 15%;">
+                    <span class="clip-label">Drone_Intro</span>
+                  </div>
+                  <div class="timeline-clip clip-v1" style="left: 15%; width: 20%;">
+                    <span class="clip-label">Guitar_Solo</span>
+                  </div>
+                  <div class="timeline-clip clip-v1 active-clip" style="left: 35%; width: 25%;">
+                    <span class="clip-label">Pyro_Close (DROP)</span>
+                  </div>
+                  <div class="timeline-clip clip-v1" style="left: 60%; width: 20%;">
+                    <span class="clip-label">Crowd_Mosh</span>
+                  </div>
+                  <div class="timeline-clip clip-v1" style="left: 80%; width: 20%;">
+                    <span class="clip-label">Drummer_Sync</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Track A1: Song Reference Audio Clock -->
+              <div class="timeline-lane-row">
+                <div class="lane-header lane-header-audio">
+                  <span class="lane-name">🎵 A1 Song Clock</span>
+                  <div class="lane-controls">
+                    <button class="lane-btn active" title="Lock Audio Clock (Rule 8)">🔒</button>
+                    <button class="lane-btn active" title="Mute Audio">🔊</button>
+                    <button class="lane-btn" title="Solo">S</button>
+                  </div>
+                </div>
+                <div class="lane-body track-a1">
+                  <div class="timeline-audio-clip">
+                    <div class="audio-waveform-visual"></div>
+                    <span class="clip-label">Hyperdrive_Synthwave_128BPM.wav (Locked Reference)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Track A2: Foley / Impact SFX -->
+              <div class="timeline-lane-row">
+                <div class="lane-header lane-header-audio">
+                  <span class="lane-name">🔊 A2 SFX / Foley</span>
+                  <div class="lane-controls">
+                    <button class="lane-btn" title="Lock Track">🔒</button>
+                    <button class="lane-btn active" title="Mute Audio">🔊</button>
+                    <button class="lane-btn" title="Solo">S</button>
+                  </div>
+                </div>
+                <div class="lane-body track-a2">
+                  <div class="timeline-clip clip-sfx" style="left: 35%; width: 8%;">
+                    <span class="clip-label">Impact_Drop.wav</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Timeline Global Playhead Cursor -->
+              <div class="timeline-global-playhead" style="left: 35%;">
+                <div class="playhead-head"></div>
+                <div class="playhead-line"></div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Export Page -->
+
+      <!-- ================= PAGE 4: EXPORT ================= -->
       <section id="page-export" class="page-view">
         <div class="export-layout">
-          <div class="card glass-card export-settings">
-            <div class="card-header"><h3>Export Settings</h3></div>
-            <div class="settings-form">
-              <label>Resolution
+          <!-- Col 1: Delivery Presets & Codec Config -->
+          <div class="card glass-card export-presets-card">
+            <div class="card-header">
+              <div class="header-title-group">
+                <span class="card-icon">🚀</span>
+                <div class="card-title-text">
+                  <h3>Export Delivery Bay</h3>
+                  <span class="sub-text">Render Profiles & Hardware Pipeline</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="export-form">
+              <div class="preset-cards-grid">
+                <div class="preset-card active">
+                  <div class="preset-name">YouTube 4K UHD</div>
+                  <div class="preset-spec">3840x2160 • 60fps • 50Mbps</div>
+                </div>
+                <div class="preset-card">
+                  <div class="preset-name">TikTok / Reels Vertical</div>
+                  <div class="preset-spec">1080x1920 9:16 • 30fps</div>
+                </div>
+                <div class="preset-card">
+                  <div class="preset-name">ProRes 422 HQ Master</div>
+                  <div class="preset-spec">Lossless Production Intermediate</div>
+                </div>
+                <div class="preset-card">
+                  <div class="preset-name">Fast Web Draft 1080p</div>
+                  <div class="preset-spec">1920x1080 • 30fps • 8Mbps</div>
+                </div>
+              </div>
+
+              <div class="control-row">
+                <label class="control-label">Video Encoder</label>
                 <select class="select-input">
-                  <option>1080p Full HD (1920x1080)</option>
-                  <option>4K Ultra HD (3840x2160)</option>
-                  <option>9:16 Vertical Shorts/Reels (1080x1920)</option>
-                </select>
-              </label>
-              <label>Encoder
-                <select class="select-input">
-                  <option>H.264 (Hardware NVENC / AMF / D3D11)</option>
+                  <option>H.264 (NVIDIA NVENC Hardware Accelerated)</option>
+                  <option>HEVC / H.265 (NVENC 10-Bit Hardware)</option>
+                  <option>Apple ProRes 422 (libavcodec CPU)</option>
                   <option>H.264 (libx264 Pure CPU Fallback)</option>
                 </select>
-              </label>
-              <button class="btn btn-primary">Render Now</button>
+              </div>
+
+              <div class="control-row">
+                <label class="control-label">Target Bitrate</label>
+                <div class="input-with-unit">
+                  <input type="number" class="text-input" value="45">
+                  <span class="unit-tag">Mbps (CBR)</span>
+                </div>
+              </div>
+
+              <div class="control-row">
+                <label class="control-label">Audio Quality</label>
+                <select class="select-input">
+                  <option>AAC 320 kbps • 48 kHz Stereo</option>
+                  <option>Uncompressed 24-bit PCM 48 kHz</option>
+                </select>
+              </div>
+
+              <button class="btn btn-secondary btn-block" id="btn-add-queue">+ Add to Render Queue</button>
             </div>
           </div>
-          <div class="card glass-card export-preview">
-            <div class="monitor-header"><span class="monitor-badge">EXPORT PREVIEW</span></div>
-            <div class="viewport"><div class="viewport-placeholder">Render Preview</div></div>
+
+          <!-- Col 2: Export Preview Monitor -->
+          <div class="card glass-card export-preview-card">
+            <div class="monitor-header">
+              <div class="monitor-id-group">
+                <span class="monitor-tag">RENDER PREVIEW</span>
+                <span class="monitor-filename">Export Frame Check</span>
+              </div>
+              <div class="monitor-meta-group">
+                <span class="badge-slate">3840x2160 (16:9)</span>
+              </div>
+            </div>
+
+            <div class="viewport-wrapper">
+              <div class="viewport">
+                <div class="viewport-placeholder">
+                  <span class="monitor-screen-icon">🎯</span>
+                  <span class="monitor-screen-title">Hardware Render Frame</span>
+                  <span class="monitor-screen-sub">Frame 02,520 / 05,400 • NVENC Buffer Clear</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="render-spec-summary">
+              <div class="spec-col">
+                <span class="spec-lbl">Est. File Size</span>
+                <span class="spec-val">684.2 MB</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-lbl">Total Frames</span>
+                <span class="spec-val">5,400</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-lbl">Est. Render Time</span>
+                <span class="spec-val text-accent">~1m 12s</span>
+              </div>
+            </div>
           </div>
-          <div class="card glass-card export-queue">
-            <div class="card-header"><h3>Render Queue</h3></div>
-            <div class="queue-list"><p class="muted">No jobs in queue</p></div>
+
+          <!-- Col 3: Render Queue & Execution Bay -->
+          <div class="card glass-card export-queue-card">
+            <div class="card-header">
+              <div class="header-title-group">
+                <span class="card-icon">📋</span>
+                <div class="card-title-text">
+                  <h3>Render Queue</h3>
+                  <span class="sub-text">1 Active Job</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="queue-list" id="queue-list">
+              <div class="queue-job-card active">
+                <div class="job-meta">
+                  <span class="job-title">Cyber_Odyssey_Master_4K.mp4</span>
+                  <span class="job-tag">Rendering (64%)</span>
+                </div>
+                <div class="job-progress-wrapper">
+                  <div class="job-progress-bar" style="width: 64%;"></div>
+                </div>
+                <div class="job-stats">
+                  <span>Speed: <strong>182 fps</strong> (3.0x Realtime)</span>
+                  <span>ETA: <strong>00:00:26</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="queue-actions">
+              <button class="btn btn-primary btn-block btn-glow" id="btn-start-queue">⚡ Start Batch Render</button>
+              <button class="btn btn-ghost btn-block" id="btn-open-export-folder">📂 Open Output Directory</button>
+            </div>
           </div>
         </div>
       </section>
+
     </main>
 
-    <!-- Studio Footer Navigation (Charter Rule 10 Compliant) -->
+    <!-- Studio Footer Navigation (Charter Rule 10 Compliant: Media, Cut, Edit, Export) -->
     <footer class="studio-footer">
       <nav class="footer-nav">
-        <button class="nav-tab active" data-page="media">
+        <button class="nav-tab active" data-page="media" id="tab-media">
           <span class="tab-icon">📁</span>
           <span class="tab-label">Media</span>
           <kbd>Ctrl+1</kbd>
         </button>
-        <button class="nav-tab" data-page="cut">
+        <button class="nav-tab" data-page="cut" id="tab-cut">
           <span class="tab-icon">✂️</span>
           <span class="tab-label">Cut</span>
           <kbd>Ctrl+2</kbd>
         </button>
-        <button class="nav-tab" data-page="edit">
+        <button class="nav-tab" data-page="edit" id="tab-edit">
           <span class="tab-icon">🎞️</span>
           <span class="tab-label">Edit</span>
           <kbd>Ctrl+3</kbd>
         </button>
-        <button class="nav-tab" data-page="export">
+        <button class="nav-tab" data-page="export" id="tab-export">
           <span class="tab-icon">🚀</span>
           <span class="tab-label">Export</span>
           <kbd>Ctrl+4</kbd>
         </button>
       </nav>
+
       <div class="footer-status">
-        <span class="status-indicator ready"></span>
-        <span class="status-text" id="engine-status">Engine Ready</span>
+        <span class="status-indicator ready" id="status-lamp"></span>
+        <span class="status-text" id="engine-status">Engine: Ready • D3D11 NVENC Accelerated • Audio Buffer 128 (2.7ms)</span>
       </div>
     </footer>
   </div>
+
   <script src="app.js"></script>
 </body>
 </html>
