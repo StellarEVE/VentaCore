@@ -7,8 +7,10 @@
     "frontendDist": "ui"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "VentaCore Studio",
         "width": 1400,
         "height": 880,
