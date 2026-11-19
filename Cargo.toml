@@ -8,6 +8,7 @@ members = [
     "crates/render",
     "crates/engine",
     "crates/app",
+    "crates/app-tauri",
     "crates/cli",
 ]
 

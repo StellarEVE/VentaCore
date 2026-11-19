@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VentaCore Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="studio-header">
+      <div class="logo">
+        <span class="logo-badge">VC</span>
+        <span class="logo-text">VentaCore <strong>Studio</strong></span>
+        <span class="engine-badge">Tauri 2.0 Engine</span>
+      </div>
+      <div class="project-info">
+        <span class="project-title" id="project-title">Untitled Music Video</span>
+        <span class="bpm-tag" id="bpm-display">128.0 BPM</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" id="btn-theme-toggle">Theme</button>
+        <button class="btn btn-primary" id="btn-export">Export Video</button>
+      </div>
+    </header>
+
+    <main class="studio-workspace">
+      <!-- Media Page -->
+      <section id="page-media" class="page-view active">
+        <div class="split-view">
+          <div class="panel-left">
+            <!-- Music Panel -->
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3>🎵 Song Track</h3>
+                <button class="btn btn-sm btn-accent" id="btn-browse-music">Browse Song</button>
+              </div>
+              <div class="drop-zone" id="drop-zone-music">
+                <div class="drop-icon">🎧</div>
+                <div class="drop-title">Drop your master song audio here</div>
+                <div class="drop-subtitle">Supports MP3, WAV, FLAC with automatic beat detection</div>
+              </div>
+              <div id="song-card" class="song-card hidden">
+                <div class="song-meta">
+                  <span class="song-name" id="song-name">-</span>
+                  <span class="song-duration" id="song-duration">0:00</span>
+                </div>
+                <div class="waveform-container" id="song-waveform">
+                  <div class="playhead" id="song-playhead"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footage Panel -->
+            <div class="card glass-card footage-card">
+              <div class="card-header">
+                <h3>🎬 Footage Pool</h3>
+                <button class="btn btn-sm btn-accent" id="btn-add-videos">Add Videos</button>
+              </div>
+              <div class="drop-zone" id="drop-zone-footage">
+                <div class="drop-icon">🎞️</div>
+                <div class="drop-title">Drop video footage files here</div>
+                <div class="drop-subtitle">Supports MP4, MOV, MKV, WebM</div>
+              </div>
+              <div class="footage-pool-list" id="footage-list">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-right">
+            <!-- Source Monitor -->
+            <div class="card glass-card monitor-card">
+              <div class="monitor-header">
+                <div class="monitor-badge">SOURCE MONITOR</div>
+                <div class="monitor-title" id="source-title">No clip selected</div>
+                <div class="monitor-res" id="source-res">0x0</div>
+              </div>
+              <div class="viewport" id="source-viewport">
+                <video id="source-video-element" class="hidden"></video>
+                <div class="viewport-placeholder" id="source-placeholder">
+                  <span class="placeholder-icon">📽️</span>
+                  <span>Select a video from the pool to audition</span>
+                </div>
+              </div>
+              <div class="transport-controls">
+                <div class="scrub-container">
+                  <input type="range" min="0" max="100" value="0" class="scrub-bar" id="source-scrub">
+                </div>
+                <div class="transport-row">
+                  <div class="transport-buttons">
+                    <button class="btn-icon" id="btn-step-back" title="Previous Frame (Left Arrow / J)">⏮</button>
+                    <button class="btn-icon btn-play" id="btn-play-pause" title="Play / Pause (Space)">▶</button>
+                    <button class="btn-icon" id="btn-step-fwd" title="Next Frame (Right Arrow / L)">⏭</button>
+                  </div>
+                  <div class="timecode-display" id="source-timecode">00:00:00:00</div>
+                  <div class="transport-options">
+                    <span class="res-tag">Full Res</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cut Page -->
+      <section id="page-cut" class="page-view">
+        <div class="cut-layout">
+          <div class="cut-top">
+            <div class="card glass-card program-monitor">
+              <div class="monitor-header">
+                <div class="monitor-badge program-badge">PROGRAM MONITOR</div>
+                <div class="monitor-title">Live Montage Cut</div>
+                <div class="monitor-res">1920x1080 (30 fps)</div>
+              </div>
+              <div class="viewport">
+                <div class="viewport-placeholder">
+                  <span>Press "Begin Analysis" to generate the beat cut</span>
+                </div>
+              </div>
+            </div>
+            <div class="card glass-card cut-settings">
+              <div class="card-header">
+                <h3>Montage Engine Settings</h3>
+              </div>
+              <div class="settings-form">
+                <label>Energy Cut Pacing
+                  <select class="select-input">
+                    <option>Beat-Adaptive (Balanced)</option>
+                    <option>High Energy (Fast cuts on 1/2 bars)</option>
+                    <option>Cinematic (Longer phrases on change points)</option>
+                  </select>
+                </label>
+                <button class="btn btn-primary" id="btn-start-analysis">⚡ Begin Cut Analysis</button>
+              </div>
+            </div>
+          </div>
+          <div class="cut-bottom">
+            <div class="card glass-card timeline-card">
+              <div class="timeline-header">
+                <span>Timeline Ruler</span>
+              </div>
+              <div class="timeline-tracks" id="cut-timeline-tracks">
+                <div class="track song-track">🎵 Master Song (Fixed Clock)</div>
+                <div class="track video-track">🎬 Video Cuts (Beat-Synced)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Edit Page -->
+      <section id="page-edit" class="page-view">
+        <div class="edit-layout">
+          <div class="edit-monitors">
+            <div class="card glass-card half-monitor">
+              <div class="monitor-header"><span class="monitor-badge">SOURCE</span></div>
+              <div class="viewport small-viewport"><div class="viewport-placeholder">Source Clip</div></div>
+            </div>
+            <div class="card glass-card half-monitor">
+              <div class="monitor-header"><span class="monitor-badge program-badge">PROGRAM</span></div>
+              <div class="viewport small-viewport"><div class="viewport-placeholder">Master Sequence</div></div>
+            </div>
+            <div class="card glass-card inspector-panel">
+              <div class="card-header"><h3>Inspector</h3></div>
+              <div class="inspector-content">Select an item on the timeline</div>
+            </div>
+          </div>
+          <div class="edit-timeline-area card glass-card">
+            <div class="multitrack-header">Multitrack NLE Timeline</div>
+            <div class="timeline-tracks">
+              <div class="track song-track">🎵 Song Track (Locked)</div>
+              <div class="track video-track">V1 Main Cut</div>
+              <div class="track video-track">V2 B-Roll / Overlays</div>
+              <div class="track audio-track">A1 Footage Audio</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Export Page -->
+      <section id="page-export" class="page-view">
+        <div class="export-layout">
+          <div class="card glass-card export-settings">
+            <div class="card-header"><h3>Export Settings</h3></div>
+            <div class="settings-form">
+              <label>Resolution
+                <select class="select-input">
+                  <option>1080p Full HD (1920x1080)</option>
+                  <option>4K Ultra HD (3840x2160)</option>
+                  <option>9:16 Vertical Shorts/Reels (1080x1920)</option>
+                </select>
+              </label>
+              <label>Encoder
+                <select class="select-input">
+                  <option>H.264 (Hardware NVENC / AMF / D3D11)</option>
+                  <option>H.264 (libx264 Pure CPU Fallback)</option>
+                </select>
+              </label>
+              <button class="btn btn-primary">Render Now</button>
+            </div>
+          </div>
+          <div class="card glass-card export-preview">
+            <div class="monitor-header"><span class="monitor-badge">EXPORT PREVIEW</span></div>
+            <div class="viewport"><div class="viewport-placeholder">Render Preview</div></div>
+          </div>
+          <div class="card glass-card export-queue">
+            <div class="card-header"><h3>Render Queue</h3></div>
+            <div class="queue-list"><p class="muted">No jobs in queue</p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Studio Footer Navigation (Charter Rule 10 Compliant) -->
+    <footer class="studio-footer">
+      <nav class="footer-nav">
+        <button class="nav-tab active" data-page="media">
+          <span class="tab-icon">📁</span>
+          <span class="tab-label">Media</span>
+          <kbd>Ctrl+1</kbd>
+        </button>
+        <button class="nav-tab" data-page="cut">
+          <span class="tab-icon">✂️</span>
+          <span class="tab-label">Cut</span>
+          <kbd>Ctrl+2</kbd>
+        </button>
+        <button class="nav-tab" data-page="edit">
+          <span class="tab-icon">🎞️</span>
+          <span class="tab-label">Edit</span>
+          <kbd>Ctrl+3</kbd>
+        </button>
+        <button class="nav-tab" data-page="export">
+          <span class="tab-icon">🚀</span>
+          <span class="tab-label">Export</span>
+          <kbd>Ctrl+4</kbd>
+        </button>
+      </nav>
+      <div class="footer-status">
+        <span class="status-indicator ready"></span>
+        <span class="status-text" id="engine-status">Engine Ready</span>
+      </div>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

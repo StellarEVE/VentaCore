@@ -1,0 +1,18 @@
+[package]
+name = "ventacore-tauri"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+ventacore-core = { workspace = true }
+ventacore-engine = { workspace = true }
+ventacore-platform = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tauri = { version = "2.0.0", default-features = false, features = ["wry", "compression"] }
+
+[build-dependencies]
+tauri-build = { version = "2.0.0" }
