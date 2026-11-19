@@ -279,18 +279,19 @@
                 </div>
               </div>
               <div class="viewport-wrapper">
-                <div class="viewport">
-                  <div class="viewport-placeholder">
+                <div class="viewport" id="cut-viewport">
+                  <video id="cut-program-video" playsinline preload="auto" style="display: none; width: 100%; height: 100%; object-fit: contain;"></video>
+                  <div class="viewport-placeholder" id="cut-placeholder">
                     <span class="monitor-screen-icon">✂️</span>
-                    <span class="monitor-screen-title">Beat Cut Live Preview</span>
-                    <span class="monitor-screen-sub">Synchronized to Hyperdrive_Synthwave_128BPM.wav</span>
+                    <span class="monitor-screen-title" id="cut-screen-title">Beat Cut Live Preview</span>
+                    <span class="monitor-screen-sub" id="cut-screen-sub">Click "⚡ Generate Beat-Sync Cut" to assemble sequence</span>
                   </div>
                 </div>
               </div>
               <div class="cut-transport-bar">
                 <button class="btn-icon" id="btn-cut-play">▶</button>
-                <div class="timecode-readout" id="cut-timecode">00:01:24:18</div>
-                <span class="cut-status-text">Cut Phrase: <strong>Chorus 1 (Drop)</strong></span>
+                <div class="timecode-readout" id="cut-timecode">00:00:00:00</div>
+                <span class="cut-status-text" id="cut-phrase-label">Phrase: <strong>Ready</strong></span>
               </div>
             </div>
 
@@ -419,12 +420,13 @@
             <div class="card glass-card edit-monitor-card">
               <div class="monitor-header">
                 <span class="monitor-tag">SOURCE</span>
-                <span class="monitor-filename">Drone_Neon_Cybercity.mp4</span>
+                <span class="monitor-filename" id="edit-source-filename">Audition Clip</span>
               </div>
               <div class="viewport small-viewport">
-                <div class="viewport-placeholder">
+                <video id="edit-source-video" playsinline preload="auto" style="display: none; width: 100%; height: 100%; object-fit: contain;"></video>
+                <div class="viewport-placeholder" id="edit-source-placeholder">
                   <span class="small-icon">📽️</span>
-                  <span>Source In/Out Range</span>
+                  <span>Select clip on timeline or media pool</span>
                 </div>
               </div>
             </div>
@@ -433,12 +435,13 @@
             <div class="card glass-card edit-monitor-card">
               <div class="monitor-header">
                 <span class="monitor-tag program-tag">PROGRAM</span>
-                <span class="monitor-filename">Timeline Master (Active)</span>
+                <span class="monitor-filename" id="edit-program-filename">Timeline Master</span>
               </div>
               <div class="viewport small-viewport">
-                <div class="viewport-placeholder">
+                <video id="edit-program-video" playsinline preload="auto" style="display: none; width: 100%; height: 100%; object-fit: contain;"></video>
+                <div class="viewport-placeholder" id="edit-program-placeholder">
                   <span class="small-icon">🎬</span>
-                  <span>Master Cut at 00:01:24:18</span>
+                  <span id="edit-program-status">Master Timeline Output</span>
                 </div>
               </div>
             </div>
@@ -450,7 +453,7 @@
                   <span class="card-icon">🎛️</span>
                   <div class="card-title-text">
                     <h3>Clip Inspector</h3>
-                    <span class="sub-text" id="inspector-clip-name">Clip: Pyro_Close.mp4</span>
+                    <span class="sub-text" id="inspector-clip-name">No Clip Selected</span>
                   </div>
                 </div>
               </div>
@@ -459,25 +462,26 @@
                 <div class="field-section-title">TRANSFORM & SCALE</div>
                 <div class="inspector-row">
                   <span class="prop-label">Scale</span>
-                  <input type="text" class="input-tiny" value="100.0%">
+                  <input type="text" id="inspector-scale" class="input-tiny" value="100.0%">
                   <span class="prop-label">Rotation</span>
-                  <input type="text" class="input-tiny" value="0.0°">
+                  <input type="text" id="inspector-rotation" class="input-tiny" value="0.0°">
                 </div>
 
                 <div class="field-section-title">BEAT SPEED RAMPING</div>
-                <div class="speed-buttons">
-                  <button class="btn-chip active">1.0x Normal</button>
-                  <button class="btn-chip">0.5x Half</button>
-                  <button class="btn-chip">2.0x Double</button>
-                  <button class="btn-chip btn-accent-chip">⚡ Beat Ramp</button>
+                <div class="speed-buttons" id="inspector-speed-group">
+                  <button class="btn-chip active" data-speed="1.0">1.0x Normal</button>
+                  <button class="btn-chip" data-speed="0.5">0.5x Half</button>
+                  <button class="btn-chip" data-speed="2.0">2.0x Double</button>
+                  <button class="btn-chip btn-accent-chip" data-speed="ramp">⚡ Beat Ramp</button>
                 </div>
 
                 <div class="field-section-title">COLOR GRADE PRESET</div>
-                <select class="select-input select-xs">
-                  <option>Cyber Neon (Cyan & Orange Teal)</option>
-                  <option>Industrial Bleach Bypass</option>
-                  <option>Midnight Violet Shadow</option>
-                  <option>Linear Clean Flat</option>
+                <select class="select-input select-xs" id="inspector-color-preset">
+                  <option value="none">Original (No Filter)</option>
+                  <option value="cyber">Cyber Neon (Cyan & Orange Teal)</option>
+                  <option value="bleach">Industrial Bleach Bypass</option>
+                  <option value="violet">Midnight Violet Shadow</option>
+                  <option value="bw">High Contrast Monochrome</option>
                 </select>
               </div>
             </div>
@@ -529,14 +533,7 @@
                     <button class="lane-btn" title="Solo">S</button>
                   </div>
                 </div>
-                <div class="lane-body track-v2">
-                  <div class="timeline-clip clip-v2" style="left: 15%; width: 18%;">
-                    <span class="clip-label">Pyro_Overlay.mp4 [Blend: Screen]</span>
-                  </div>
-                  <div class="timeline-clip clip-v2" style="left: 65%; width: 14%;">
-                    <span class="clip-label">Laser_Rays.mp4 [Blend: Add]</span>
-                  </div>
-                </div>
+                <div class="lane-body track-v2" id="lane-track-v2"></div>
               </div>
 
               <!-- Track V1: Primary Beat Cut -->
@@ -549,23 +546,7 @@
                     <button class="lane-btn" title="Solo">S</button>
                   </div>
                 </div>
-                <div class="lane-body track-v1">
-                  <div class="timeline-clip clip-v1" style="left: 0%; width: 15%;">
-                    <span class="clip-label">Drone_Intro</span>
-                  </div>
-                  <div class="timeline-clip clip-v1" style="left: 15%; width: 20%;">
-                    <span class="clip-label">Guitar_Solo</span>
-                  </div>
-                  <div class="timeline-clip clip-v1 active-clip" style="left: 35%; width: 25%;">
-                    <span class="clip-label">Pyro_Close (DROP)</span>
-                  </div>
-                  <div class="timeline-clip clip-v1" style="left: 60%; width: 20%;">
-                    <span class="clip-label">Crowd_Mosh</span>
-                  </div>
-                  <div class="timeline-clip clip-v1" style="left: 80%; width: 20%;">
-                    <span class="clip-label">Drummer_Sync</span>
-                  </div>
-                </div>
+                <div class="lane-body track-v1" id="lane-track-v1"></div>
               </div>
 
               <!-- Track A1: Song Reference Audio Clock -->
@@ -651,27 +632,27 @@
 
               <div class="control-row">
                 <label class="control-label">Video Encoder</label>
-                <select class="select-input">
-                  <option>H.264 (NVIDIA NVENC Hardware Accelerated)</option>
-                  <option>HEVC / H.265 (NVENC 10-Bit Hardware)</option>
-                  <option>Apple ProRes 422 (libavcodec CPU)</option>
-                  <option>H.264 (libx264 Pure CPU Fallback)</option>
+                <select class="select-input" id="select-export-encoder">
+                  <option value="h264_nvenc">H.264 (NVIDIA NVENC Hardware Accelerated)</option>
+                  <option value="libx264">H.264 (libx264 CPU Reference)</option>
+                  <option value="hevc_nvenc">HEVC / H.265 (NVENC Hardware)</option>
+                  <option value="prores">Apple ProRes 422 (HQ Master)</option>
                 </select>
               </div>
 
               <div class="control-row">
                 <label class="control-label">Target Bitrate</label>
                 <div class="input-with-unit">
-                  <input type="number" class="text-input" value="45">
-                  <span class="unit-tag">Mbps (CBR)</span>
+                  <input type="number" class="text-input" id="input-export-bitrate" value="45" min="5" max="150">
+                  <span class="unit-tag">Mbps</span>
                 </div>
               </div>
 
               <div class="control-row">
                 <label class="control-label">Audio Quality</label>
-                <select class="select-input">
-                  <option>AAC 320 kbps • 48 kHz Stereo</option>
-                  <option>Uncompressed 24-bit PCM 48 kHz</option>
+                <select class="select-input" id="select-export-audio">
+                  <option value="aac_320">AAC 320 kbps • 48 kHz Stereo</option>
+                  <option value="pcm_24">Uncompressed 24-bit PCM 48 kHz</option>
                 </select>
               </div>
 
@@ -684,10 +665,10 @@
             <div class="monitor-header">
               <div class="monitor-id-group">
                 <span class="monitor-tag">RENDER PREVIEW</span>
-                <span class="monitor-filename">Export Frame Check</span>
+                <span class="monitor-filename" id="export-preview-title">Ready for Master Delivery</span>
               </div>
               <div class="monitor-meta-group">
-                <span class="badge-slate">3840x2160 (16:9)</span>
+                <span class="badge-slate" id="export-badge-res">1920x1080 FHD</span>
               </div>
             </div>
 
@@ -695,8 +676,8 @@
               <div class="viewport">
                 <div class="viewport-placeholder">
                   <span class="monitor-screen-icon">🎯</span>
-                  <span class="monitor-screen-title">Hardware Render Frame</span>
-                  <span class="monitor-screen-sub">Frame 02,520 / 05,400 • NVENC Buffer Clear</span>
+                  <span class="monitor-screen-title" id="export-monitor-title">Master Video Output</span>
+                  <span class="monitor-screen-sub" id="export-frame-status">Configure delivery preset and click "Start Batch Render"</span>
                 </div>
               </div>
             </div>
@@ -704,15 +685,15 @@
             <div class="render-spec-summary">
               <div class="spec-col">
                 <span class="spec-lbl">Est. File Size</span>
-                <span class="spec-val">684.2 MB</span>
+                <span class="spec-val" id="export-est-filesize">-- MB</span>
               </div>
               <div class="spec-col">
                 <span class="spec-lbl">Total Frames</span>
-                <span class="spec-val">5,400</span>
+                <span class="spec-val" id="export-total-frames">--</span>
               </div>
               <div class="spec-col">
                 <span class="spec-lbl">Est. Render Time</span>
-                <span class="spec-val text-accent">~1m 12s</span>
+                <span class="spec-val text-accent" id="export-est-rendertime">--</span>
               </div>
             </div>
           </div>
@@ -724,24 +705,14 @@
                 <span class="card-icon">📋</span>
                 <div class="card-title-text">
                   <h3>Render Queue</h3>
-                  <span class="sub-text">1 Active Job</span>
+                  <span class="sub-text" id="queue-count-sub">0 Jobs Queued</span>
                 </div>
               </div>
             </div>
 
             <div class="queue-list" id="queue-list">
-              <div class="queue-job-card active">
-                <div class="job-meta">
-                  <span class="job-title">Cyber_Odyssey_Master_4K.mp4</span>
-                  <span class="job-tag">Rendering (64%)</span>
-                </div>
-                <div class="job-progress-wrapper">
-                  <div class="job-progress-bar" style="width: 64%;"></div>
-                </div>
-                <div class="job-stats">
-                  <span>Speed: <strong>182 fps</strong> (3.0x Realtime)</span>
-                  <span>ETA: <strong>00:00:26</strong></span>
-                </div>
+              <div class="queue-empty-state" id="queue-empty-state">
+                No active render jobs. Choose preset and click "+ Add to Render Queue" or "Start Batch Render".
               </div>
             </div>
 

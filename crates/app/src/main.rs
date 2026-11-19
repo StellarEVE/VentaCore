@@ -26,6 +26,7 @@ fn main() {
             import_footage,
             set_in_out,
             generate_beat_cut,
+            update_cuts,
             export_video,
             open_directory,
         ])

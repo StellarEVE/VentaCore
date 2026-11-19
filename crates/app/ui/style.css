@@ -1416,6 +1416,33 @@ body {
   background: var(--bg-hover);
 }
 
+.beat-slice-item.active-playing-cut,
+.timeline-clip.active-playing-cut {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45) !important;
+  background: rgba(0, 240, 255, 0.22) !important;
+}
+
+.beat-slice-item.pinned {
+  border-top: 2px solid #f59e0b;
+}
+
+.queue-empty-state {
+  padding: 30px 15px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.multitrack-container.cursor-razor .timeline-clip {
+  cursor: crosshair !important;
+}
+
+.multitrack-container.cursor-slip .timeline-clip {
+  cursor: ew-resize !important;
+}
+
 .slice-accent {
   border-left: 2px solid var(--accent-cyan);
 }

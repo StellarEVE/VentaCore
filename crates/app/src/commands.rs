@@ -395,9 +395,22 @@ pub fn generate_beat_cut(
 }
 
 #[tauri::command]
+pub fn update_cuts(
+    session: tauri::State<SharedSession>,
+    cuts: Vec<CutSliceDto>,
+) -> Result<usize, String> {
+    let mut lock = session.lock().map_err(|e| e.to_string())?;
+    let count = cuts.len();
+    lock.generated_cuts = cuts;
+    Ok(count)
+}
+
+#[tauri::command]
 pub fn export_video(
     session: tauri::State<SharedSession>,
     preset: String,
+    encoder: Option<String>,
+    bitrate_mbps: Option<u32>,
 ) -> Result<ExportResultDto, String> {
     let lock = session.lock().map_err(|e| e.to_string())?;
 
@@ -482,9 +495,22 @@ pub fn export_video(
     }
 
     cmd.arg("-vf").arg(&scale_filter);
-    cmd.arg("-c:v").arg("libx264");
-    cmd.arg("-preset").arg("fast");
-    cmd.arg("-crf").arg(crf);
+
+    let enc_choice = encoder.unwrap_or_else(|| "h264".to_string()).to_ascii_lowercase();
+    let use_nvenc = enc_choice.contains("nvenc");
+    let video_codec = if use_nvenc { "h264_nvenc" } else { "libx264" };
+
+    cmd.arg("-c:v").arg(video_codec);
+    cmd.arg("-preset").arg(if use_nvenc { "p4" } else { "fast" });
+
+    if let Some(mbps) = bitrate_mbps {
+        cmd.arg("-b:v").arg(format!("{}M", mbps));
+        cmd.arg("-maxrate").arg(format!("{}M", (mbps as f64 * 1.5) as u32));
+        cmd.arg("-bufsize").arg(format!("{}M", mbps * 2));
+    } else {
+        cmd.arg("-crf").arg(crf);
+    }
+
     cmd.arg("-pix_fmt").arg("yuv420p");
     cmd.arg("-c:a").arg("aac");
     cmd.arg("-b:a").arg("320k");
