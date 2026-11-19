@@ -725,6 +725,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function format_time(totalSeconds) {
+    const s = Math.max(0, Math.floor(totalSeconds || 0));
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
   function formatSMPTE(totalSec) {
     const s = Math.max(0, totalSec);
     const hrs = Math.floor(s / 3600);
