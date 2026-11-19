@@ -277,7 +277,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function drawTimelineTrackWaveform(peaks, downbeats = [], duration = 180) {
+    const canvas = document.getElementById('timeline-waveform-canvas');
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(300, Math.floor(rect.width || canvas.clientWidth || 800));
+    const height = Math.max(20, Math.floor(rect.height || canvas.clientHeight || 36));
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, width, height);
+
+    if (!peaks || peaks.length === 0) return;
+
+    // Glowing cyan/emerald gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, height);
+    grad.addColorStop(0, '#10b981');   // emerald top
+    grad.addColorStop(0.5, '#00f0ff'); // cyan mid
+    grad.addColorStop(1, '#047857');   // deep teal bottom
+    ctx.fillStyle = grad;
+
+    const count = peaks.length;
+    const barWidth = Math.max(1, width / count);
+
+    for (let i = 0; i < count; i++) {
+      const p = peaks[i] || 0.1;
+      const barH = Math.max(2, p * (height - 4));
+      const x = i * barWidth;
+      const y = (height - barH) / 2;
+      ctx.fillRect(x, y, Math.max(1, barWidth - 1), barH);
+    }
+
+    // Downbeat markers overlay
+    if (downbeats && downbeats.length > 0 && duration > 0) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      downbeats.forEach(t => {
+        const x = (t / duration) * width;
+        ctx.fillRect(Math.round(x), 0, 1.5, height);
+      });
+    }
+  }
+
   drawWaveform(Array.from({ length: 150 }, (_, i) => Math.abs(Math.sin(i * 0.1)) * 0.7 + 0.15));
+  drawTimelineTrackWaveform(Array.from({ length: 200 }, (_, i) => Math.abs(Math.sin(i * 0.08)) * 0.7 + 0.15));
+  window.addEventListener('resize', () => {
+    if (loadedSong) {
+      drawTimelineTrackWaveform(loadedSong.peaks, loadedSong.downbeats, loadedSong.duration_seconds);
+    }
+  });
 
   function setSongData(song) {
     loadedSong = song;
@@ -289,13 +341,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     restartBeatClock(song.bpm);
     drawWaveform(song.peaks);
+    drawTimelineTrackWaveform(song.peaks, song.downbeats, song.duration_seconds);
 
     if (masterSongAudio) {
       masterSongAudio.src = song.stream_url;
     }
 
-    const a1Label = document.querySelector('.timeline-audio-clip .clip-label');
-    if (a1Label) a1Label.textContent = `${song.name} (Locked Clock)`;
+    const a1Label = document.getElementById('timeline-audio-label') || document.querySelector('.timeline-audio-clip .clip-label');
+    if (a1Label) a1Label.textContent = `🎵 ${song.name} (${song.bpm.toFixed(1)} BPM Reference Clock)`;
 
     const statusText = document.getElementById('engine-status');
     if (statusText) statusText.textContent = `Song Loaded: ${song.name} • ${song.bpm.toFixed(1)} BPM • ${song.beats_count} Beats`;
@@ -444,10 +497,18 @@ document.addEventListener('DOMContentLoaded', () => {
     clips.forEach(clip => {
       const item = document.createElement('div');
       item.className = 'footage-item' + (activeClip && activeClip.id === clip.id ? ' selected' : '');
+
+      const thumbHtml = clip.thumbnail_url
+        ? `<img src="${clip.thumbnail_url}" class="footage-thumb-img" alt="${clip.name}" />`
+        : `<div class="footage-thumb-placeholder">🎬</div>`;
+
       item.innerHTML = `
-        <div class="footage-meta">
-          <span class="footage-name">🎬 ${clip.name}</span>
-          <span class="footage-info">${clip.duration_formatted} • ${clip.resolution} • ${clip.fps ? clip.fps.toFixed(1) : '30.0'} fps</span>
+        <div class="footage-left">
+          <div class="footage-thumb-wrapper">${thumbHtml}</div>
+          <div class="footage-meta">
+            <span class="footage-name">${clip.name}</span>
+            <span class="footage-info">${clip.duration_formatted} • ${clip.resolution} • ${clip.fps ? clip.fps.toFixed(1) : '30.0'} fps</span>
+          </div>
         </div>
         <button class="btn btn-xs btn-secondary">Audition</button>
       `;
@@ -736,7 +797,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // ------------------------------------------------------------------------
   const btnStartQueue = document.getElementById('btn-start-queue');
   const btnOpenExportFolder = document.getElementById('btn-open-export-folder');
+  const presetCards = document.querySelectorAll('.preset-card');
+  let selectedExportPreset = 'YouTube 4K UHD';
   let lastExportedFile = null;
+
+  presetCards.forEach(card => {
+    card.addEventListener('click', () => {
+      presetCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const name = card.querySelector('.preset-name');
+      if (name) selectedExportPreset = name.textContent.trim();
+    });
+  });
 
   if (btnStartQueue) {
     btnStartQueue.addEventListener('click', async () => {
@@ -750,16 +822,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const progressBar = document.querySelector('.job-progress-bar');
       const jobTag = document.querySelector('.job-tag');
-      if (progressBar) progressBar.style.width = '25%';
-      if (jobTag) jobTag.textContent = 'Rendering (Hardware Accelerated)...';
+      if (progressBar) progressBar.style.width = '35%';
+      if (jobTag) jobTag.textContent = `Rendering (${selectedExportPreset})...`;
 
       try {
-        const res = await tauriInvoke('export_video', { preset: 'YouTube 4K UHD' });
+        const res = await tauriInvoke('export_video', { preset: selectedExportPreset });
         if (res.success) {
           lastExportedFile = res.output_path;
           if (progressBar) progressBar.style.width = '100%';
           if (jobTag) jobTag.textContent = 'Export Completed (100%)';
-          alert(`Export finished!\nSaved to: ${res.output_path}`);
+          alert(`Export finished!\n${res.message}\nSaved to: ${res.output_path}`);
         } else {
           if (progressBar) progressBar.style.width = '0%';
           if (jobTag) jobTag.textContent = 'Cancelled';

@@ -46,6 +46,7 @@ pub struct FootageDataDto {
     pub stream_url: String,
     pub in_point: f64,
     pub out_point: f64,
+    pub thumbnail_url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -204,6 +205,8 @@ pub fn import_footage(session: tauri::State<SharedSession>) -> Result<Vec<Footag
 
     let ffprobe_exe = ventacore_platform::find_ffprobe_binary()
         .unwrap_or_else(|| PathBuf::from("ffprobe"));
+    let ffmpeg_exe = ventacore_platform::find_ffmpeg_binary()
+        .unwrap_or_else(|| PathBuf::from("ffmpeg"));
 
     for path in files {
         let path_str = path.to_string_lossy().to_string();
@@ -240,6 +243,35 @@ pub fn import_footage(session: tauri::State<SharedSession>) -> Result<Vec<Footag
         let stream_url = make_stream_url(&path_str);
         let duration_formatted = format_time(duration_sec);
 
+        // Generate fast video thumbnail frame via ffmpeg
+        let thumb_dir = std::env::temp_dir().join("ventacore_thumbs");
+        let _ = std::fs::create_dir_all(&thumb_dir);
+        let thumb_path = thumb_dir.join(format!("thumb_{}_{}.jpg", std::process::id(), id));
+        let seek_pos = format!("{:.3}", (duration_sec * 0.1).clamp(0.1, 2.0));
+
+        let mut thumb_cmd = std::process::Command::new(&ffmpeg_exe);
+        thumb_cmd.args(&[
+            "-y",
+            "-ss", &seek_pos,
+            "-i", &path_str,
+            "-vframes", "1",
+            "-vf", "scale=320:-1",
+            "-q:v", "4",
+        ]);
+        thumb_cmd.arg(&thumb_path);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            thumb_cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+
+        let thumbnail_url = if thumb_cmd.status().map(|s| s.success()).unwrap_or(false) && thumb_path.exists() {
+            make_stream_url(&thumb_path.to_string_lossy())
+        } else {
+            String::new()
+        };
+
         let clip = FootageDataDto {
             id,
             path: path_str,
@@ -254,6 +286,7 @@ pub fn import_footage(session: tauri::State<SharedSession>) -> Result<Vec<Footag
             stream_url,
             in_point: 0.0,
             out_point: duration_sec,
+            thumbnail_url,
         };
 
         lock.footage_pool.push(clip.clone());
@@ -321,8 +354,21 @@ pub fn generate_beat_cut(
         let beat_num = (i % 4) + 1;
         let beat_label = format!("Bar {} : Beat {}", bar_num, beat_num);
 
-        let source_in = ((i * 3) as f64) % (clip.duration_seconds.max(duration + 1.0) - duration);
-        let source_out = source_in + duration;
+        // Clamp boundaries strictly within [in_point, out_point] and [0.0, clip.duration_seconds]
+        let avail_in = clip.in_point.clamp(0.0, clip.duration_seconds);
+        let avail_out = clip.out_point.clamp(avail_in, clip.duration_seconds);
+        let avail_len = (avail_out - avail_in).max(0.1);
+
+        let (source_in, source_out) = if avail_len <= duration {
+            (avail_in, avail_out)
+        } else {
+            let max_offset = avail_len - duration;
+            // Golden ratio offset distribution for varied cuts across the clip
+            let offset = (((i as f64) * 1.6180339887) % 1.0) * max_offset;
+            let s_in = (avail_in + offset).clamp(avail_in, avail_out);
+            let s_out = (s_in + duration).min(avail_out);
+            (s_in, s_out)
+        };
 
         cuts.push(CutSliceDto {
             index: i + 1,
@@ -351,7 +397,7 @@ pub fn generate_beat_cut(
 #[tauri::command]
 pub fn export_video(
     session: tauri::State<SharedSession>,
-    _preset: String,
+    preset: String,
 ) -> Result<ExportResultDto, String> {
     let lock = session.lock().map_err(|e| e.to_string())?;
 
@@ -381,25 +427,65 @@ pub fn export_video(
     let ffmpeg_path = ventacore_platform::find_ffmpeg_binary()
         .unwrap_or_else(|| PathBuf::from("ffmpeg"));
 
-    // If we have a single clip or generated cuts, export using ffmpeg
-    let first_clip = &lock.footage_pool[0];
-    let input_video = &first_clip.path;
+    // Determine target resolution and quality based on preset
+    let (target_w, target_h, crf) = match preset.as_str() {
+        "YouTube 4K UHD" => (3840, 2160, "18"),
+        "TikTok / Reels 9:16" => (1080, 1920, "20"),
+        _ => (1920, 1080, "20"),
+    };
+
+    let scale_filter = format!(
+        "scale={}:{}:force_original_aspect_ratio=decrease,pad={}:{}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30",
+        target_w, target_h, target_w, target_h
+    );
 
     let mut cmd = std::process::Command::new(&ffmpeg_path);
     cmd.arg("-y");
-    cmd.arg("-i").arg(input_video);
 
-    // If master song is present, include it as audio
+    let temp_concat_file = if !lock.generated_cuts.is_empty() {
+        // Multi-cut sequence export using FFmpeg concat demuxer
+        let temp_dir = std::env::temp_dir();
+        let concat_path = temp_dir.join(format!("ventacore_concat_{}.txt", std::process::id()));
+        let mut script = String::from("ffconcat version 1.0\n");
+
+        for cut in &lock.generated_cuts {
+            // Format path with forward slashes for ffmpeg concat demuxer
+            let norm_path = cut.clip_path.replace('\\', "/");
+            script.push_str(&format!("file '{}'\n", norm_path));
+            script.push_str(&format!("inpoint {:.3}\n", cut.source_in));
+            script.push_str(&format!("outpoint {:.3}\n", cut.source_out));
+        }
+
+        std::fs::write(&concat_path, script)
+            .map_err(|e| format!("Failed to create temporary concat script: {}", e))?;
+
+        cmd.arg("-f").arg("concat");
+        cmd.arg("-safe").arg("0");
+        cmd.arg("-i").arg(&concat_path);
+
+        Some(concat_path)
+    } else {
+        // Single clip fallback if no beat cuts generated yet
+        let first_clip = &lock.footage_pool[0];
+        cmd.arg("-i").arg(&first_clip.path);
+        None
+    };
+
+    // If master song is present, map it as the synchronized audio track
     if let Some(ref song) = lock.current_song {
         cmd.arg("-i").arg(&song.path);
         cmd.arg("-map").arg("0:v:0");
         cmd.arg("-map").arg("1:a:0");
         cmd.arg("-shortest");
+    } else {
+        cmd.arg("-map").arg("0:v:0");
     }
 
+    cmd.arg("-vf").arg(&scale_filter);
     cmd.arg("-c:v").arg("libx264");
     cmd.arg("-preset").arg("fast");
-    cmd.arg("-crf").arg("20");
+    cmd.arg("-crf").arg(crf);
+    cmd.arg("-pix_fmt").arg("yuv420p");
     cmd.arg("-c:a").arg("aac");
     cmd.arg("-b:a").arg("320k");
     cmd.arg(&output_str);
@@ -413,11 +499,22 @@ pub fn export_video(
 
     let status = cmd.status().map_err(|e| format!("Failed to run ffmpeg: {}", e))?;
 
+    // Cleanup temporary concat file
+    if let Some(ref p) = temp_concat_file {
+        let _ = std::fs::remove_file(p);
+    }
+
     if status.success() {
+        let cuts_msg = if !lock.generated_cuts.is_empty() {
+            format!("Montage of {} beat cuts rendered successfully!", lock.generated_cuts.len())
+        } else {
+            "Video exported successfully!".to_string()
+        };
+
         Ok(ExportResultDto {
             success: true,
             output_path: output_str,
-            message: "Render completed successfully!".to_string(),
+            message: cuts_msg,
         })
     } else {
         Err(format!("ffmpeg exited with error code: {:?}", status.code()))

@@ -9,6 +9,7 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
 use std::sync::atomic::{AtomicU16, Ordering};
+use std::time::Duration;
 
 pub static SERVER_PORT: AtomicU16 = AtomicU16::new(0);
 
@@ -38,6 +39,9 @@ pub fn make_stream_url(file_path: &str) -> String {
 }
 
 fn handle_connection(mut stream: TcpStream) {
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(5)));
+    let _ = stream.set_write_timeout(Some(Duration::from_secs(5)));
+
     let mut buffer = [0u8; 4096];
     let bytes_read = match stream.read(&mut buffer) {
         Ok(n) if n > 0 => n,
@@ -59,12 +63,30 @@ fn handle_connection(mut stream: TcpStream) {
     }
 
     let uri = parts[1];
-    if !uri.starts_with("/media?path=") {
-        send_response(&mut stream, 404, "Not Found", "text/plain", b"Not Found");
-        return;
+    let query = match uri.find('?') {
+        Some(pos) => &uri[pos + 1..],
+        None => {
+            send_response(&mut stream, 400, "Bad Request", "text/plain", b"Missing Query String");
+            return;
+        }
+    };
+
+    let mut path_encoded = None;
+    for param in query.split('&') {
+        if let Some(val) = param.strip_prefix("path=") {
+            path_encoded = Some(val);
+            break;
+        }
     }
 
-    let encoded_path = &uri["/media?path=".len()..];
+    let encoded_path = match path_encoded {
+        Some(p) => p,
+        None => {
+            send_response(&mut stream, 400, "Bad Request", "text/plain", b"Missing path parameter");
+            return;
+        }
+    };
+
     let file_path_str = url_decode(encoded_path);
     let path = Path::new(&file_path_str);
 
@@ -199,6 +221,9 @@ fn mime_from_path(path: &Path) -> &'static str {
         Some("flac") => "audio/flac",
         Some("m4a") | Some("aac") => "audio/mp4",
         Some("ogg") => "audio/ogg",
+        Some("jpg") | Some("jpeg") => "image/jpeg",
+        Some("png") => "image/png",
+        Some("webp") => "image/webp",
         _ => "application/octet-stream",
     }
 }
