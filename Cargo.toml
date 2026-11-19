@@ -8,9 +8,9 @@ members = [
     "crates/render",
     "crates/engine",
     "crates/app",
-    "crates/app-tauri",
     "crates/cli",
 ]
+default-members = ["crates/app"]
 
 [workspace.package]
 version = "0.1.0"

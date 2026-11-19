@@ -1,36 +1,34 @@
-//! Layer 5: App binary for VentaCore.
-//!
-//! Native desktop GUI shell built with egui and eframe.
+// Prevents additional console window on Windows in release
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::path::PathBuf;
+mod commands;
+mod media_server;
 
-use eframe::egui;
-use ventacore_app::app::VentaApp;
-use ventacore_app::theme::apply_theme;
+use std::sync::{Arc, Mutex};
+use commands::*;
+use media_server::start_media_server;
 
-fn main() -> eframe::Result<()> {
-    let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1280.0, 720.0])
-            .with_min_inner_size([1024.0, 600.0])
-            .with_title("VentaCore Studio"),
-        ..Default::default()
-    };
+fn main() {
+    // 1. Start background local media streaming server for video/audio
+    let port = start_media_server();
+    println!("[VentaCore Studio] Media streaming server active on port {}", port);
 
-    let cache_dir = dirs_cache_root();
+    // 2. Initialize shared session state
+    let session: SharedSession = Arc::new(Mutex::new(StudioSession::default()));
 
-    eframe::run_native(
-        "VentaCore Studio",
-        native_options,
-        Box::new(|cc| {
-            apply_theme(&cc.egui_ctx);
-            let mut app = VentaApp::new(cache_dir);
-            app.probe_startup_hardware();
-            Ok(Box::new(app))
-        }),
-    )
-}
-
-fn dirs_cache_root() -> PathBuf {
-    std::env::temp_dir().join("ventacore_cache")
+    // 3. Launch Tauri 2.0 Native Shell
+    tauri::Builder::default()
+        .manage(session)
+        .invoke_handler(tauri::generate_handler![
+            probe_hardware,
+            toggle_playback,
+            select_song,
+            import_footage,
+            set_in_out,
+            generate_beat_cut,
+            export_video,
+            open_directory,
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running VentaCore Studio desktop application");
 }

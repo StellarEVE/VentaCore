@@ -18,6 +18,10 @@ serde_json = { workspace = true }
 eframe = "0.28"
 egui = "0.28"
 rfd = "0.14"
+tauri = { version = "2.0.0", default-features = false, features = ["wry", "compression"] }
+
+[build-dependencies]
+tauri-build = { version = "2.0.0" }
 
 [dev-dependencies]
 tempfile = "3.10"

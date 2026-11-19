@@ -6432,6 +6432,8 @@ dependencies = [
  "rfd",
  "serde",
  "serde_json",
+ "tauri",
+ "tauri-build",
  "tempfile",
  "ventacore-audio",
  "ventacore-core",
@@ -6523,19 +6525,6 @@ dependencies = [
  "ventacore-core",
  "ventacore-platform",
  "wgpu",
-]
-
-[[package]]
-name = "ventacore-tauri"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "ventacore-core",
- "ventacore-engine",
- "ventacore-platform",
 ]
 
 [[package]]

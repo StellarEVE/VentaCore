@@ -1,7 +1,6 @@
 //! Layer 5: App Library for VentaCore.
 //!
-//! Native desktop shell built with egui and eframe.
-//! Implements Milestone B: Watch It Build.
+//! Native desktop shell and state management for VentaCore Studio.
 
 pub mod app;
 pub mod pages;

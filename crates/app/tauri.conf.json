@@ -1,17 +1,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/refs/heads/v2/crates/tauri-cli/schema.json",
-  "productName": "ventacore",
+  "productName": "ventacore-app",
   "version": "0.1.0",
-  "identifier": "com.ventacore.app",
+  "identifier": "com.ventacore.studio",
   "build": {
     "frontendDist": "ui"
   },
   "app": {
     "windows": [
       {
-        "title": "VentaCore (Tauri Preview)",
-        "width": 1360,
-        "height": 860,
+        "title": "VentaCore Studio",
+        "width": 1400,
+        "height": 880,
+        "minWidth": 1024,
+        "minHeight": 650,
         "resizable": true,
         "fullscreen": false
       }
